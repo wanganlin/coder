@@ -1,0 +1,12 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+{{#each tables}}
+use App\Http\Controllers\Api\\{{className}}Controller;
+{{/each}}
+
+Route::prefix('v1')->group(function () {
+    {{#each tables}}
+    Route::apiResource('{{pluralize (snakeCase name)}}', {{className}}Controller::class);
+    {{/each}}
+});

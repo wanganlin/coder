@@ -1,0 +1,32 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class Update{{className}}Request extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            {{#each columns}}
+            {{#unless isPrimaryKey}}
+            {{#if (and ../features.auditFields (or (eq name "created_at") (eq name "updated_at")))}}
+            {{else}}
+            '{{name}}' => [
+                'sometimes',
+                '{{#if nullable}}nullable{{else}}required{{/if}}',
+                '{{#if (eq phpType "string")}}string{{/if}}{{#if (eq phpType "int")}}integer{{/if}}{{#if (eq phpType "float")}}numeric{{/if}}{{#if (eq phpType "bool")}}boolean{{/if}}',
+                {{#if length}}'max:{{length}}',{{/if}}
+            ],
+            {{/if}}
+            {{/unless}}
+            {{/each}}
+        ];
+    }
+}

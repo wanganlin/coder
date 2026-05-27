@@ -1,0 +1,24 @@
+name: laravel
+language: php
+paradigm: mvc
+fileExtension: .php
+skeleton:
+  - template: skeleton/composer.json.hbs
+    output: composer.json
+  - template: skeleton/env.hbs
+    output: .env
+  - template: skeleton/Controller.php.hbs
+    output: app/Http/Controllers/Controller.php
+  - template: skeleton/api.php.hbs
+    output: routes/api.php
+entityTemplates:
+  - template: entity/Model.php.hbs
+    output: app/Models/{{className}}.php
+  - template: entity/StoreRequest.php.hbs
+    output: app/Http/Requests/Store{{className}}Request.php
+  - template: entity/UpdateRequest.php.hbs
+    output: app/Http/Requests/Update{{className}}Request.php
+  - template: entity/Resource.php.hbs
+    output: app/Http/Resources/{{className}}Resource.php
+  - template: entity/Controller.php.hbs
+    output: app/Http/Controllers/Api/{{className}}Controller.php

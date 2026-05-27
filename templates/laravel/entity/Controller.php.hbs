@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\{{className}};
+use App\Http\Requests\Store{{className}}Request;
+use App\Http\Requests\Update{{className}}Request;
+use App\Http\Resources\{{className}}Resource;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+
+class {{className}}Controller extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(): AnonymousResourceCollection|JsonResponse
+    {
+        {{#if features.pagination}}
+        $items = {{className}}::paginate(request()->query('size', 10));
+        return {{className}}Resource::collection($items);
+        {{else}}
+        $items = {{className}}::all();
+        return {{className}}Resource::collection($items);
+        {{/if}}
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Store{{className}}Request $request): JsonResponse
+    {
+        $validated = $request->validated();
+        $item = {{className}}::create($validated);
+        return (new {{className}}Resource($item))
+            ->response()
+            ->setStatusCode(201);
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id): JsonResponse|{{className}}Resource
+    {
+        $item = {{className}}::find($id);
+        if (!$item) {
+            return response()->json(['message' => '{{className}} not found'], 404);
+        }
+        return new {{className}}Resource($item);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Update{{className}}Request $request, string $id): JsonResponse|{{className}}Resource
+    {
+        $item = {{className}}::find($id);
+        if (!$item) {
+            return response()->json(['message' => '{{className}} not found'], 404);
+        }
+        $validated = $request->validated();
+        $item->update($validated);
+        return new {{className}}Resource($item);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id): JsonResponse
+    {
+        $item = {{className}}::find($id);
+        if (!$item) {
+            return response()->json(['message' => '{{className}} not found'], 404);
+        }
+        $item->delete();
+        return response()->json(null, 204);
+    }
+}
