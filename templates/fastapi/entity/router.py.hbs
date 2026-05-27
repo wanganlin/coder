@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
+from models.{{snakeCase tableName}} import {{className}}
 from typing import List, Dict, Any
 from database import get_db
 from schemas.{{snakeCase tableName}} import {{className}}Create, {{className}}Update, {{className}}Response
@@ -43,7 +44,20 @@ def read_{{snakeCase tableName}}_by_id(
     {{#each columns}}{{#if isPrimaryKey}}id: {{pythonType}}{{/if}}{{/each}},
     db: Session = Depends(get_db)
 ):
+    {{#if table.relationships.length}}
+    db_obj = db.query({{className}}).options(
+        {{#each table.relationships}}
+        {{#if (eq type "ManyToOne")}}
+        selectinload({{../className}}.{{snakeCase targetPropertyName}}),
+        {{/if}}
+        {{#if (eq type "OneToMany")}}
+        selectinload({{../className}}.{{snakeCase targetPropertyName}}_list),
+        {{/if}}
+        {{/each}}
+    ).filter({{#each columns}}{{#if isPrimaryKey}}{{../className}}.{{name}} == id{{/if}}{{/each}}).first()
+    {{else}}
     db_obj = {{snakeCase tableName}}_crud.get_by_id(db, {{#each columns}}{{#if isPrimaryKey}}id{{/if}}{{/each}})
+    {{/if}}
     if db_obj is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -45,7 +45,11 @@ func Get{{className}}List(c *gin.Context) {
 
 	var total int64
 	db.DB.Model(&model.{{className}}{}).Count(&total)
+	{{#if table.relationships.length}}
+	db.DB.Preload("{{#each table.relationships}}{{#if @first}}{{#if (eq type "ManyToOne")}}{{targetClassName}}{{/if}}{{/if}}{{/each}}").Limit(size).Offset(offset).Find(&items)
+	{{else}}
 	db.DB.Limit(size).Offset(offset).Find(&items)
+	{{/if}}
 
 	c.JSON(http.StatusOK, gin.H{
 		"content":       items,
@@ -84,7 +88,20 @@ func Get{{className}}ByID(c *gin.Context) {
 	{{/if}}{{/each}}
 
 	var item model.{{className}}
+	{{#if table.relationships.length}}
+	query := db.DB
+	{{#each table.relationships}}
+	{{#if (eq type "ManyToOne")}}
+	query = query.Preload("{{targetClassName}}")
+	{{/if}}
+	{{#if (eq type "OneToMany")}}
+	query = query.Preload("{{targetPropertyName}}List")
+	{{/if}}
+	{{/each}}
+	if err := query.First(&item, id).Error; err != nil {
+	{{else}}
 	if err := db.DB.First(&item, id).Error; err != nil {
+	{{/if}}
 		c.JSON(http.StatusNotFound, gin.H{"error": "{{className}} not found"})
 		return
 	}

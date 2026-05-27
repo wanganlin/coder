@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * {{tableComment}}
@@ -65,4 +67,30 @@ class {{className}} extends Model
         {{/if}}
         {{/each}}
     ];
+
+{{#if table.relationships.length}}
+    // 关联关系（Coder 自动推导）
+{{#each table.relationships}}
+{{#if (eq type "ManyToOne")}}
+    /**
+     * {{type}}: {{../className}} → {{targetClassName}} (FK: {{#each columnNames}}{{this}}{{/each}})
+     */
+    public function {{targetPropertyName}}(): BelongsTo
+    {
+        return $this->belongsTo({{targetClassName}}::class, '{{#each columnNames}}{{this}}{{/each}}', '{{#each targetColumns}}{{this}}{{/each}}');
+    }
+
+{{/if}}
+{{#if (eq type "OneToMany")}}
+    /**
+     * {{type}}: {{../className}} ← {{targetClassName}}
+     */
+    public function {{targetPropertyName}}List(): HasMany
+    {
+        return $this->hasMany({{targetClassName}}::class, '{{#each targetColumns}}{{this}}{{/each}}', '{{#each ../primaryKey}}{{this}}{{/each}}');
+    }
+
+{{/if}}
+{{/each}}
+{{/if}}
 }

@@ -43,7 +43,11 @@ class {{className}}Controller extends Controller
      */
     public function show(string $id): JsonResponse|{{className}}Resource
     {
+        {{#if table.relationships.length}}
+        $item = {{className}}::with([{{#each table.relationships}}'{{#if (eq type "ManyToOne")}}{{targetPropertyName}}{{/if}}{{#if (eq type "OneToMany")}}{{targetPropertyName}}List{{/if}}'{{#unless @last}}, {{/unless}}{{/each}}])->find($id);
+        {{else}}
         $item = {{className}}::find($id);
+        {{/if}}
         if (!$item) {
             return response()->json(['message' => '{{className}} not found'], 404);
         }

@@ -13,6 +13,20 @@ type {{className}} struct {
 	{{pascalCase name}} {{goType}} `gorm:"column:{{name}}{{#if isPrimaryKey}};primaryKey{{#if isAutoIncrement}};autoIncrement{{/if}}{{/if}}{{#unless nullable}};not null{{/unless}}" json:"{{propertyName name}}"`
 	{{/if}}
 	{{/each}}
+
+	{{#if table.relationships.length}}
+	// 关联关系（Coder 自动推导）
+	{{#each table.relationships}}
+	{{#if (eq type "ManyToOne")}}
+	// {{type}}: {{../className}} → {{targetClassName}} (FK: {{#each columnNames}}{{this}}{{/each}})
+	{{targetClassName}} {{targetClassName}} `gorm:"foreignKey:{{#each columnNames}}{{pascalCase this}}{{/each}};references:{{#each targetColumns}}{{pascalCase this}}{{/each}}" json:"{{targetPropertyName}}"`
+	{{/if}}
+	{{#if (eq type "OneToMany")}}
+	// {{type}}: {{../className}} ← {{targetClassName}} (mappedBy: {{mappedBy}})
+	{{targetPropertyName}}List []{{targetClassName}} `gorm:"foreignKey:{{mappedBy}}" json:"{{targetPropertyName}}List"`
+	{{/if}}
+	{{/each}}
+	{{/if}}
 }
 
 // TableName 指定 GORM 表名
