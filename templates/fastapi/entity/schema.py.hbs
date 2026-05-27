@@ -1,0 +1,65 @@
+from datetime import datetime, date, time
+from decimal import Decimal
+from typing import Optional, Dict, Any, List
+from pydantic import BaseModel, Field, ConfigDict
+
+class {{className}}Create(BaseModel):
+    # Required fields
+    {{#each columns}}
+    {{#unless isPrimaryKey}}
+    {{#unless nullable}}
+    {{name}}: {{pythonType}} = Field(
+        ...,
+        {{#if (eq pythonType "str")}}{{#if length}}max_length={{length}}, {{/if}}{{/if}}
+        description="{{comment}}"
+    )
+    {{/unless}}
+    {{/unless}}
+    {{/each}}
+    
+    # Optional fields
+    {{#each columns}}
+    {{#unless isPrimaryKey}}
+    {{#if nullable}}
+    {{name}}: Optional[{{pythonType}}] = Field(
+        default=None,
+        {{#if (eq pythonType "str")}}{{#if length}}max_length={{length}}, {{/if}}{{/if}}
+        description="{{comment}}"
+    )
+    {{/if}}
+    {{/unless}}
+    {{/each}}
+
+class {{className}}Update(BaseModel):
+    {{#each columns}}
+    {{#unless isPrimaryKey}}
+    {{name}}: Optional[{{pythonType}}] = Field(
+        default=None,
+        {{#if (eq pythonType "str")}}{{#if length}}max_length={{length}}, {{/if}}{{/if}}
+        description="{{comment}}"
+    )
+    {{/unless}}
+    {{/each}}
+
+class {{className}}Response(BaseModel):
+    # Non-nullable fields
+    {{#each columns}}
+    {{#unless nullable}}
+    {{name}}: {{pythonType}} = Field(
+        ...,
+        description="{{comment}}"
+    )
+    {{/unless}}
+    {{/each}}
+    
+    # Nullable fields
+    {{#each columns}}
+    {{#if nullable}}
+    {{name}}: Optional[{{pythonType}}] = Field(
+        default=None,
+        description="{{comment}}"
+    )
+    {{/if}}
+    {{/each}}
+
+    model_config = ConfigDict(from_attributes=True)

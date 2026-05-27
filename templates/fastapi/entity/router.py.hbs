@@ -1,0 +1,87 @@
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List, Dict, Any
+from database import get_db
+from schemas.{{snakeCase tableName}} import {{className}}Create, {{className}}Update, {{className}}Response
+import crud.{{snakeCase tableName}} as {{snakeCase tableName}}_crud
+
+router = APIRouter(
+    prefix="/{{pluralize propertyName}}",
+    tags=["{{className}}"],
+)
+
+{{#if features.pagination}}
+@router.get("", response_model=Dict[str, Any])
+def read_{{pluralize propertyName}}(
+    page: int = 0,
+    size: int = 10,
+    db: Session = Depends(get_db)
+):
+    if size <= 0:
+        size = 10
+    skip = page * size
+    total = {{snakeCase tableName}}_crud.count(db)
+    items = {{snakeCase tableName}}_crud.get_multi(db, skip=skip, limit=size)
+    return {
+        "content": items,
+        "totalElements": total,
+        "page": page,
+        "size": size
+    }
+{{else}}
+@router.get("", response_model=List[{{className}}Response])
+def read_{{pluralize propertyName}}(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db)
+):
+    return {{snakeCase tableName}}_crud.get_multi(db, skip=skip, limit=limit)
+{{/if}}
+
+@router.get("/{{#each columns}}{{#if isPrimaryKey}}{id}{{/if}}{{/each}}", response_model={{className}}Response)
+def read_{{snakeCase tableName}}_by_id(
+    {{#each columns}}{{#if isPrimaryKey}}id: {{pythonType}}{{/if}}{{/each}},
+    db: Session = Depends(get_db)
+):
+    db_obj = {{snakeCase tableName}}_crud.get_by_id(db, {{#each columns}}{{#if isPrimaryKey}}id{{/if}}{{/each}})
+    if db_obj is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="{{className}} not found"
+        )
+    return db_obj
+
+@router.post("", response_model={{className}}Response, status_code=status.HTTP_201_CREATED)
+def create_{{snakeCase tableName}}(
+    obj_in: {{className}}Create,
+    db: Session = Depends(get_db)
+):
+    return {{snakeCase tableName}}_crud.create(db, obj_in)
+
+@router.put("/{{#each columns}}{{#if isPrimaryKey}}{id}{{/if}}{{/each}}", response_model={{className}}Response)
+def update_{{snakeCase tableName}}(
+    {{#each columns}}{{#if isPrimaryKey}}id: {{pythonType}}{{/if}}{{/each}},
+    obj_in: {{className}}Update,
+    db: Session = Depends(get_db)
+):
+    db_obj = {{snakeCase tableName}}_crud.get_by_id(db, {{#each columns}}{{#if isPrimaryKey}}id{{/if}}{{/each}})
+    if db_obj is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="{{className}} not found"
+        )
+    return {{snakeCase tableName}}_crud.update(db, db_obj, obj_in)
+
+@router.delete("/{{#each columns}}{{#if isPrimaryKey}}{id}{{/if}}{{/each}}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_{{snakeCase tableName}}(
+    {{#each columns}}{{#if isPrimaryKey}}id: {{pythonType}}{{/if}}{{/each}},
+    db: Session = Depends(get_db)
+):
+    db_obj = {{snakeCase tableName}}_crud.get_by_id(db, {{#each columns}}{{#if isPrimaryKey}}id{{/if}}{{/each}})
+    if db_obj is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="{{className}} not found"
+        )
+    {{snakeCase tableName}}_crud.delete(db, {{#each columns}}{{#if isPrimaryKey}}id{{/if}}{{/each}})
+    return None

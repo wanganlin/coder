@@ -1,0 +1,29 @@
+from fastapi import FastAPI
+from database import engine, Base
+
+# 导入所有 models 使得 Base.metadata.create_all 能够识别表结构
+{{#each tables}}
+from models.{{snakeCase name}} import {{className}}
+{{/each}}
+
+# 导入各个 router
+{{#each tables}}
+from routers.{{snakeCase name}} import router as {{snakeCase name}}_router
+{{/each}}
+
+# 在启动时自动创建所有数据库表
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(
+    title="Coder Generated FastAPI Service",
+    version="1.0.0",
+)
+
+# 注册路由
+{{#each tables}}
+app.include_router({{snakeCase name}}_router, prefix="/api/v1")
+{{/each}}
+
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to Coder Generated FastAPI Service"}

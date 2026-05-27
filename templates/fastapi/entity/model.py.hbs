@@ -1,0 +1,30 @@
+from datetime import datetime, date, time
+from decimal import Decimal
+from typing import Optional, Dict, Any, List
+from sqlalchemy import String, Integer, BigInteger, Boolean, DateTime, Date, Time, Float, Numeric, Text, LargeBinary
+from sqlalchemy.orm import Mapped, mapped_column
+from database import Base
+
+class {{className}}(Base):
+    __tablename__ = "{{tableName}}"
+    {{#if tableComment}}
+    __table_args__ = {"comment": "{{tableComment}}"}
+    {{/if}}
+
+    {{#each columns}}
+    {{name}}: Mapped[{{#if nullable}}Optional[{{pythonType}}]{{else}}{{pythonType}}{{/if}}] = mapped_column(
+        {{#if (eq pythonType "str")}}{{#if (eq sqlType "text")}}Text(){{else}}String({{#if length}}{{length}}{{else}}255{{/if}}){{/if}}, {{/if}}
+        {{#if (eq pythonType "int")}}{{#if (eq sqlType "bigint")}}BigInteger(){{else}}Integer(){{/if}}, {{/if}}
+        {{#if (eq pythonType "bool")}}Boolean(), {{/if}}
+        {{#if (eq pythonType "float")}}Float(), {{/if}}
+        {{#if (eq pythonType "Decimal")}}Numeric({{#if precision}}precision={{precision}}, scale={{scale}}{{/if}}), {{/if}}
+        {{#if (eq pythonType "datetime")}}DateTime(), {{/if}}
+        {{#if (eq pythonType "date")}}Date(), {{/if}}
+        {{#if (eq pythonType "time")}}Time(), {{/if}}
+        {{#if (eq pythonType "bytes")}}LargeBinary(), {{/if}}
+        {{#if isPrimaryKey}}primary_key=True, {{/if}}
+        {{#if isAutoIncrement}}autoincrement=True, {{/if}}
+        nullable={{#if nullable}}True{{else}}False{{/if}},
+        {{#if comment}}comment="{{comment}}", {{/if}}
+    )
+    {{/each}}

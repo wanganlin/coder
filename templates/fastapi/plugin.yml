@@ -1,0 +1,20 @@
+name: fastapi
+language: python
+paradigm: lightweight
+fileExtension: .py
+skeleton:
+  - template: skeleton/requirements.txt.hbs
+    output: requirements.txt
+  - template: skeleton/database.py.hbs
+    output: database.py
+  - template: skeleton/main.py.hbs
+    output: main.py
+entityTemplates:
+  - template: entity/model.py.hbs
+    output: models/{{snakeCase tableName}}.py
+  - template: entity/schema.py.hbs
+    output: schemas/{{snakeCase tableName}}.py
+  - template: entity/crud.py.hbs
+    output: crud/{{snakeCase tableName}}.py
+  - template: entity/router.py.hbs
+    output: routers/{{snakeCase tableName}}.py

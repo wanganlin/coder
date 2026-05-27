@@ -1,0 +1,38 @@
+from sqlalchemy.orm import Session
+from models.{{snakeCase tableName}} import {{className}}
+from schemas.{{snakeCase tableName}} import {{className}}Create, {{className}}Update
+from typing import List, Optional
+
+def get_by_id(db: Session, {{#each columns}}{{#if isPrimaryKey}}{{name}}: {{pythonType}}{{/if}}{{/each}}) -> Optional[{{className}}]:
+    return db.query({{className}}).filter({{#each columns}}{{#if isPrimaryKey}}{{../className}}.{{name}} == {{name}}{{/if}}{{/each}}).first()
+
+def get_multi(db: Session, skip: int = 0, limit: int = 100) -> List[{{className}}]:
+    return db.query({{className}}).offset(skip).limit(limit).all()
+
+def count(db: Session) -> int:
+    return db.query({{className}}).count()
+
+def create(db: Session, obj_in: {{className}}Create) -> {{className}}:
+    db_obj = {{className}}(
+        **obj_in.model_dump()
+    )
+    db.add(db_obj)
+    db.commit()
+    db.refresh(db_obj)
+    return db_obj
+
+def update(db: Session, db_obj: {{className}}, obj_in: {{className}}Update) -> {{className}}:
+    update_data = obj_in.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_obj, field, value)
+    db.add(db_obj)
+    db.commit()
+    db.refresh(db_obj)
+    return db_obj
+
+def delete(db: Session, {{#each columns}}{{#if isPrimaryKey}}{{name}}: {{pythonType}}{{/if}}{{/each}}) -> Optional[{{className}}]:
+    db_obj = get_by_id(db, {{#each columns}}{{#if isPrimaryKey}}{{name}}{{/if}}{{/each}})
+    if db_obj:
+        db.delete(db_obj)
+        db.commit()
+    return db_obj
