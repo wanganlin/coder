@@ -81,7 +81,7 @@ public class {{className}}Controller {
                     // Update keys
                     {{#each columns}}
                     {{#if (not isPrimaryKey)}}
-                    {{#if (and ../features.auditFields (or (eq name "created_at") (or (eq name "updated_at") (or (eq name "created_by") (eq name "updated_by")))))}}
+                    {{#if (and ../features.auditFields (isAuditField this))}}
                     {{else}}
                     existing.set{{pascalCase name}}(entity.get{{pascalCase name}}());
                     {{/if}}

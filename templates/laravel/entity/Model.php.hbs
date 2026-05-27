@@ -35,7 +35,7 @@ class {{className}} extends Model
     protected $fillable = [
         {{#each columns}}
         {{#unless isPrimaryKey}}
-        {{#if (and ../features.auditFields (or (eq name "created_at") (eq name "updated_at")))}}
+        {{#if (and ../features.auditFields (isAuditField this))}}
         {{else}}
         '{{name}}',
         {{/if}}

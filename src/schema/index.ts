@@ -1,6 +1,6 @@
 import { toClassName, toPropertyName } from './naming.js';
 import { mapSqlType } from './type-mappings.js';
-import { type TableSchema, type ColumnSchema } from './types.js';
+import { type TableSchema, type ColumnSchema, type RelationshipSchema } from './types.js';
 import { type FieldExtension } from '../config/schema.js';
 
 export * from './types.js';
@@ -83,5 +83,65 @@ export function processTableSchema(
     primaryKey,
     indexes: rawTable.indexes || [],
     foreignKeys: rawTable.foreignKeys || [],
+    relationships: [],
   };
+}
+
+/**
+ * 从所有表的 Schema 中自动推导关联关系
+ *
+ * 遍历所有外键，为每张表生成：
+ * - @ManyToOne（当前表持有外键 → 关联目标表）
+ * - @OneToMany（其他表持有指向当前表的外键 → 反向关联）
+ *
+ * @param schemas 所有已处理的 TableSchema 列表（会被原地修改）
+ */
+export function deriveRelationships(schemas: TableSchema[]): void {
+  const schemaMap = new Map<string, TableSchema>();
+  for (const schema of schemas) {
+    schemaMap.set(schema.name, schema);
+  }
+
+  for (const schema of schemas) {
+    const relationships: RelationshipSchema[] = [];
+
+    // 1. ManyToOne：当前表的外键 → 关联目标表
+    for (const fk of schema.foreignKeys) {
+      const target = schemaMap.get(fk.referencedTableName);
+      relationships.push({
+        type: 'ManyToOne',
+        columnNames: fk.columnNames,
+        targetTable: fk.referencedTableName,
+        targetColumns: fk.referencedColumnNames,
+        targetClassName: target ? toClassName(target.name) : toClassName(fk.referencedTableName),
+        targetPropertyName: toPropertyName(fk.referencedTableName, 'java'),
+      });
+    }
+
+    // 2. OneToMany：其他表的外键指向当前表 → 反向关联
+    for (const other of schemas) {
+      if (other.name === schema.name) continue;
+      for (const fk of other.foreignKeys) {
+        if (fk.referencedTableName === schema.name) {
+          // 找到引用当前表的列名作为 mappedBy
+          const mappedByCol =
+            other.columns.find(
+              (c) => c.name === fk.columnNames[0] && !c.isPrimaryKey,
+            )?.propertyName || other.columns[0]?.propertyName || '';
+
+          relationships.push({
+            type: 'OneToMany',
+            columnNames: [],
+            targetTable: other.name,
+            targetColumns: fk.columnNames,
+            targetClassName: toClassName(other.name),
+            targetPropertyName: toPropertyName(other.name, 'java'),
+            mappedBy: mappedByCol,
+          });
+        }
+      }
+    }
+
+    schema.relationships = relationships;
+  }
 }

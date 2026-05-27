@@ -11,6 +11,12 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.math.BigDecimal;
 import java.util.UUID;
+{{#if relationships.length}}
+{{#each relationships}}
+{{#if (eq type "OneToMany")}}import java.util.List;
+{{/if}}
+{{/each}}
+{{/if}}
 
 {{#if features.swagger}}
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -34,7 +40,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class {{className}} {{#if features.auditFields}}extends BaseEntity{{/if}} {
 
     {{#each columns}}
-    {{#if (and ../features.auditFields (or (eq name "created_at") (or (eq name "updated_at") (or (eq name "created_by") (eq name "updated_by")))))}}
+    {{#if (and ../features.auditFields (isAuditField this))}}
     // 审计字段 {{name}} 自动继承自 BaseEntity
     {{else}}
     {{#if isPrimaryKey}}
@@ -51,4 +57,24 @@ public class {{className}} {{#if features.auditFields}}extends BaseEntity{{/if}}
 
     {{/if}}
     {{/each}}
+
+    {{#if relationships.length}}
+    // ==== Coder 推导的关联关系 ====
+
+    {{#each relationships}}
+    {{#if (eq type "ManyToOne")}}
+    // {{type}}: {{../className}} → {{targetClassName}}
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn({{#each columnNames}}name = "{{this}}"{{#unless @last}}, {{/unless}}{{/each}})
+    private {{targetClassName}} {{targetPropertyName}};
+
+    {{/if}}
+    {{#if (eq type "OneToMany")}}
+    // {{type}}: {{../className}} ← {{targetClassName}}
+    @OneToMany(mappedBy = "{{mappedBy}}", fetch = FetchType.LAZY)
+    private List<{{targetClassName}}> {{targetPropertyName}}List;
+
+    {{/if}}
+    {{/each}}
+    {{/if}}
 }

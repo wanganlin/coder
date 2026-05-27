@@ -7,7 +7,11 @@ import (
 // {{className}} {{tableComment}}
 type {{className}} struct {
 	{{#each columns}}
+	{{#if (and ../features.auditFields (isAuditField this))}}
+	// 审计字段 {{name}} 由中间件/GORM Hooks 自动填充
+	{{else}}
 	{{pascalCase name}} {{goType}} `gorm:"column:{{name}}{{#if isPrimaryKey}};primaryKey{{#if isAutoIncrement}};autoIncrement{{/if}}{{/if}}{{#unless nullable}};not null{{/unless}}" json:"{{propertyName name}}"`
+	{{/if}}
 	{{/each}}
 }
 

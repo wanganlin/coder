@@ -8,6 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+{{#if features.swagger}}
+// Register{{className}}Routes 注册 {{className}} 路由
+// @Summary {{className}} CRUD 路由注册
+// @Tags {{className}}
+{{/if}}
 func Register{{className}}Routes(rg *gin.RouterGroup) {
 	rg.GET("/{{pluralize propertyName}}", Get{{className}}List)
 	rg.GET("/{{pluralize propertyName}}/:id", Get{{className}}ByID)
@@ -16,6 +21,17 @@ func Register{{className}}Routes(rg *gin.RouterGroup) {
 	rg.DELETE("/{{pluralize propertyName}}/:id", Delete{{className}})
 }
 
+
+{{#if features.swagger}}
+// Get{{className}}List 获取 {{className}} 分页列表
+// @Summary 获取 {{className}} 分页列表
+// @Tags {{className}}
+// @Produce json
+// @Param page query int false "页码" default(0)
+// @Param size query int false "每页条数" default(10)
+// @Success 200 {object} object{content=[]model.{{className}},totalElements=int,page=int,size=int}
+// @Router /{{pluralize propertyName}} [get]
+{{/if}}
 func Get{{className}}List(c *gin.Context) {
 	var items []model.{{className}}
 
@@ -43,6 +59,17 @@ func Get{{className}}List(c *gin.Context) {
 	{{/if}}
 }
 
+
+{{#if features.swagger}}
+// Get{{className}}ByID 根据 ID 获取单个 {{className}}
+// @Summary 根据 ID 获取 {{className}}
+// @Tags {{className}}
+// @Produce json
+// @Param id path int true "主键ID"
+// @Success 200 {object} model.{{className}}
+// @Failure 404 {object} object{error=string}
+// @Router /{{pluralize propertyName}}/{id} [get]
+{{/if}}
 func Get{{className}}ByID(c *gin.Context) {
 	{{#each columns}}{{#if isPrimaryKey}}
 	{{#if (eq goType "string")}}
@@ -65,6 +92,18 @@ func Get{{className}}ByID(c *gin.Context) {
 	c.JSON(http.StatusOK, item)
 }
 
+
+{{#if features.swagger}}
+// Create{{className}} 创建 {{className}}
+// @Summary 创建 {{className}}
+// @Tags {{className}}
+// @Accept json
+// @Produce json
+// @Param body body model.Create{{className}}Request true "创建请求"
+// @Success 201 {object} model.{{className}}
+// @Failure 400 {object} object{error=string}
+// @Router /{{pluralize propertyName}} [post]
+{{/if}}
 func Create{{className}}(c *gin.Context) {
 	var req model.Create{{className}}Request
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -88,6 +127,20 @@ func Create{{className}}(c *gin.Context) {
 	c.JSON(http.StatusCreated, item)
 }
 
+
+{{#if features.swagger}}
+// Update{{className}} 更新 {{className}}
+// @Summary 更新 {{className}}
+// @Tags {{className}}
+// @Accept json
+// @Produce json
+// @Param id path int true "主键ID"
+// @Param body body model.Update{{className}}Request true "更新请求"
+// @Success 200 {object} model.{{className}}
+// @Failure 400 {object} object{error=string}
+// @Failure 404 {object} object{error=string}
+// @Router /{{pluralize propertyName}}/{id} [put]
+{{/if}}
 func Update{{className}}(c *gin.Context) {
 	{{#each columns}}{{#if isPrimaryKey}}
 	{{#if (eq goType "string")}}
@@ -128,6 +181,18 @@ func Update{{className}}(c *gin.Context) {
 	c.JSON(http.StatusOK, item)
 }
 
+
+{{#if features.swagger}}
+// Delete{{className}} 删除 {{className}}
+// @Summary 删除 {{className}}
+// @Tags {{className}}
+// @Produce json
+// @Param id path int true "主键ID"
+// @Success 204
+// @Failure 400 {object} object{error=string}
+// @Failure 404 {object} object{error=string}
+// @Router /{{pluralize propertyName}}/{id} [delete]
+{{/if}}
 func Delete{{className}}(c *gin.Context) {
 	{{#each columns}}{{#if isPrimaryKey}}
 	{{#if (eq goType "string")}}

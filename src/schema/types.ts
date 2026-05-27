@@ -13,6 +13,26 @@ export interface ForeignKeySchema {
   referencedColumnNames: string[];
 }
 
+/**
+ * 表间关联关系（由外键推导）
+ */
+export interface RelationshipSchema {
+  /** 关联类型 */
+  type: 'ManyToOne' | 'OneToMany' | 'ManyToMany' | 'OneToOne';
+  /** 当前表的外键列名（ManyToOne 为外键列，OneToMany 为空） */
+  columnNames: string[];
+  /** 关联的目标表名 */
+  targetTable: string;
+  /** 目标表中的引用列名 */
+  targetColumns: string[];
+  /** 目标表的 Java 类名 */
+  targetClassName: string;
+  /** 目标表属性名（camelCase） */
+  targetPropertyName: string;
+  /** 反向映射属性名（OneToMany 用） */
+  mappedBy?: string;
+}
+
 export interface ColumnSchema {
   name: string; // 原始列名 (e.g. user_id)
   propertyName: string; // 目标语言属性名 (e.g. userId, UserId, user_id)
@@ -46,4 +66,6 @@ export interface TableSchema {
   primaryKey: string[]; // 主键列名列表
   indexes: IndexSchema[]; // 所有索引
   foreignKeys: ForeignKeySchema[]; // 所有外键
+  /** 推导出的表间关联关系（ManyToOne / OneToMany 等） */
+  relationships?: RelationshipSchema[];
 }

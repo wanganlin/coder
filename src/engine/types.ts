@@ -20,4 +20,6 @@ export interface PluginMetadata {
 export interface FileOutput {
   outputPath: string;
   content: string;
+  /** 目标语言，用于保护区标记语法（java / go / python / php / typescript） */
+  language?: string;
 }

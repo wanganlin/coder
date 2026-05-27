@@ -8,11 +8,14 @@ class {{className}}Create(BaseModel):
     {{#each columns}}
     {{#unless isPrimaryKey}}
     {{#unless nullable}}
+    {{#if (and ../../features.auditFields (isAuditField this))}}
+    {{else}}
     {{name}}: {{pythonType}} = Field(
         ...,
         {{#if (eq pythonType "str")}}{{#if length}}max_length={{length}}, {{/if}}{{/if}}
         description="{{comment}}"
     )
+    {{/if}}
     {{/unless}}
     {{/unless}}
     {{/each}}
@@ -21,11 +24,14 @@ class {{className}}Create(BaseModel):
     {{#each columns}}
     {{#unless isPrimaryKey}}
     {{#if nullable}}
+    {{#if (and ../../features.auditFields (isAuditField this))}}
+    {{else}}
     {{name}}: Optional[{{pythonType}}] = Field(
         default=None,
         {{#if (eq pythonType "str")}}{{#if length}}max_length={{length}}, {{/if}}{{/if}}
         description="{{comment}}"
     )
+    {{/if}}
     {{/if}}
     {{/unless}}
     {{/each}}
@@ -33,11 +39,14 @@ class {{className}}Create(BaseModel):
 class {{className}}Update(BaseModel):
     {{#each columns}}
     {{#unless isPrimaryKey}}
+    {{#if (and ../features.auditFields (isAuditField this))}}
+    {{else}}
     {{name}}: Optional[{{pythonType}}] = Field(
         default=None,
         {{#if (eq pythonType "str")}}{{#if length}}max_length={{length}}, {{/if}}{{/if}}
         description="{{comment}}"
     )
+    {{/if}}
     {{/unless}}
     {{/each}}
 

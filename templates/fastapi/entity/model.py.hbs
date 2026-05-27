@@ -12,6 +12,9 @@ class {{className}}(Base):
     {{/if}}
 
     {{#each columns}}
+    {{#if (and ../features.auditFields (isAuditField this))}}
+    # 审计字段 {{name}} 由 SQLAlchemy 事件监听器自动填充
+    {{else}}
     {{name}}: Mapped[{{#if nullable}}Optional[{{pythonType}}]{{else}}{{pythonType}}{{/if}}] = mapped_column(
         {{#if (eq pythonType "str")}}{{#if (eq sqlType "text")}}Text(){{else}}String({{#if length}}{{length}}{{else}}255{{/if}}){{/if}}, {{/if}}
         {{#if (eq pythonType "int")}}{{#if (eq sqlType "bigint")}}BigInteger(){{else}}Integer(){{/if}}, {{/if}}
@@ -27,4 +30,5 @@ class {{className}}(Base):
         nullable={{#if nullable}}True{{else}}False{{/if}},
         {{#if comment}}comment="{{comment}}", {{/if}}
     )
+    {{/if}}
     {{/each}}

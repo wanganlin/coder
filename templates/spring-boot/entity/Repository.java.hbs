@@ -22,4 +22,13 @@ public interface {{className}}Repository extends JpaRepository<{{className}}, {{
     List<{{../className}}> findBy{{#each columns}}{{pascalCase this}}{{/each}}({{#each columns}}{{#with (findColumn ../../columns this)}}{{javaType}} {{propertyName name}}{{/with}}{{#unless @last}}, {{/unless}}{{/each}});
     {{/if}}
     {{/each}}
+
+    {{#if foreignKeys.length}}
+    // ==========================================
+    // 自动推导外键关联查询方法
+    // ==========================================
+    {{#each foreignKeys}}
+    List<{{../className}}> findBy{{#each columnNames}}{{pascalCase this}}{{/each}}({{#each columnNames}}{{#with (findColumn ../../columns this)}}{{javaType}} {{propertyName name}}{{/with}}{{#unless @last}}, {{/unless}}{{/each}});
+    {{/each}}
+    {{/if}}
 }

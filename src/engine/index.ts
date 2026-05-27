@@ -89,6 +89,7 @@ export class TemplateEngine {
         result.push({
           outputPath: compiledPath,
           content,
+          language: this.pluginMetadata?.language || 'java',
         });
       } catch (err: any) {
         throw new Error(`渲染骨架层模板 [${item.template}] 失败: ${err.message}`);
@@ -128,6 +129,7 @@ export class TemplateEngine {
         result.push({
           outputPath: compiledPath,
           content,
+          language: this.pluginMetadata?.language || 'java',
         });
       } catch (err: any) {
         throw new Error(`渲染实体层模板 [${item.template}] 失败: ${err.message}`);

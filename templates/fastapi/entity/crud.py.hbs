@@ -9,8 +9,10 @@ def get_by_id(db: Session, {{#each columns}}{{#if isPrimaryKey}}{{name}}: {{pyth
 def get_multi(db: Session, skip: int = 0, limit: int = 100) -> List[{{className}}]:
     return db.query({{className}}).offset(skip).limit(limit).all()
 
+{{#if features.pagination}}
 def count(db: Session) -> int:
     return db.query({{className}}).count()
+{{/if}}
 
 def create(db: Session, obj_in: {{className}}Create) -> {{className}}:
     db_obj = {{className}}(

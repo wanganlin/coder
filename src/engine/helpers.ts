@@ -82,4 +82,11 @@ export function registerAllHelpers(hbs: typeof Handlebars): void {
     if (!Array.isArray(columns) || typeof colName !== 'string') return null;
     return columns.find((c) => c.name === colName) || null;
   });
+
+  // Audit field detection helper (avoids deep expression nesting)
+  hbs.registerHelper('isAuditField', (col) => {
+    if (!col || typeof col !== 'object') return false;
+    const name = col.name || '';
+    return ['created_at', 'updated_at', 'created_by', 'updated_by'].includes(name);
+  });
 }

@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { loadConfig, type CliOverrides } from '../config/index.js';
 import { createDatasourceAdapter } from '../datasource/index.js';
-import { processTableSchema, type TableSchema } from '../schema/index.js';
+import { processTableSchema, deriveRelationships, type TableSchema } from '../schema/index.js';
 import { TemplateEngine } from '../engine/index.js';
 import { writeFiles } from '../output/index.js';
 
@@ -45,6 +45,9 @@ export async function runGeneration(
       decoratedSchemas.push(decorated);
       tablesProcessed.push(name);
     }
+
+    // 4.5 推导表间关联关系（外键 → ManyToOne / OneToMany）
+    deriveRelationships(decoratedSchemas);
 
     // 5. 初始化模板引擎并加载对应插件
     const engine = new TemplateEngine();
