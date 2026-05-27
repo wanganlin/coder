@@ -1,6 +1,7 @@
 import { toClassName, toPropertyName } from './naming.js';
 import { mapSqlType } from './type-mappings.js';
 import { type TableSchema, type ColumnSchema } from './types.js';
+import { type FieldExtension } from '../config/schema.js';
 
 export * from './types.js';
 export * from './naming.js';
@@ -29,7 +30,7 @@ export function getLanguageFromFramework(framework: string): string {
 export function processTableSchema(
   rawTable: any,
   targetFramework: string,
-  extensions?: Record<string, Record<string, any>>,
+  extensions?: Record<string, Record<string, FieldExtension>>,
 ): TableSchema {
   const targetLanguage = getLanguageFromFramework(targetFramework);
   const tableName = rawTable.name;

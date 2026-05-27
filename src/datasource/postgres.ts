@@ -4,9 +4,9 @@ import {
   type TableSchema,
   type IndexSchema,
   type ForeignKeySchema,
-  processTableSchema,
 } from '../schema/index.js';
 import { filterTables } from './utils.js';
+import { toClassName, toPropertyName } from '../schema/naming.js';
 
 export class PostgreSqlAdapter implements DatasourceAdapter {
   private client: pg.Client | null = null;
@@ -232,16 +232,34 @@ export class PostgreSqlAdapter implements DatasourceAdapter {
         });
       }
 
-      const rawTableData = {
+      // 返回 TableSchema（类型映射等由 runner 中的 processTableSchema 统一完成）
+      return {
         name: tableName,
+        className: toClassName(tableName),
         comment: tableComment,
-        columns,
+        columns: columns.map((c) => ({
+          name: c.name,
+          propertyName: toPropertyName(c.name, 'java'),
+          sqlType: c.sqlType,
+          rawType: c.rawType,
+          length: c.length,
+          precision: c.precision,
+          scale: c.scale,
+          nullable: c.nullable,
+          defaultValue: c.defaultValue,
+          comment: c.comment,
+          isPrimaryKey: c.isPrimaryKey,
+          isAutoIncrement: c.isAutoIncrement,
+          javaType: '',
+          goType: '',
+          pythonType: '',
+          phpType: '',
+          tsType: '',
+        })),
+        primaryKey: columns.filter((c) => c.isPrimaryKey).map((c) => c.name),
         indexes,
         foreignKeys,
       };
-
-      // 返回修饰加工后的 TableSchema
-      return processTableSchema(rawTableData, 'spring-boot');
     } catch (err: any) {
       throw new Error(`读取 PostgreSQL 表 [${tableName}] 结构失败: ${err.message}`);
     }

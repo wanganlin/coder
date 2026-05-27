@@ -24,9 +24,7 @@ export type DatasourceConfig = z.infer<typeof DatasourceConfigSchema>;
 
 export const TargetConfigSchema = z
   .object({
-    framework: z.string({
-      required_error: 'target.framework is required',
-    }),
+    framework: z.string().min(1, 'target.framework is required'),
     output: z.string().default('./output'),
     package: z.string().optional(), // Java 包名，如 com.example.demo
   })
@@ -59,7 +57,10 @@ export const CoderConfigSchema = z.object({
   target: TargetConfigSchema,
   tables: TablesConfigSchema,
   features: FeaturesConfigSchema,
-  extensions: z.record(z.record(FieldExtensionSchema)).optional().default({}),
+  extensions: z
+    .record(z.string(), z.record(z.string(), FieldExtensionSchema))
+    .optional()
+    .default({}),
 });
 
 export type CoderConfig = z.infer<typeof CoderConfigSchema>;

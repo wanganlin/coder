@@ -6,9 +6,9 @@ import {
   type TableSchema,
   type IndexSchema,
   type ForeignKeySchema,
-  processTableSchema,
 } from '../schema/index.js';
 import { filterTables } from './utils.js';
+import { toClassName, toPropertyName } from '../schema/naming.js';
 
 interface RawDdlTable {
   name: string;
@@ -47,8 +47,34 @@ export class DdlAdapter implements DatasourceAdapter {
       throw new Error(`未在 DDL 文件中找到表: ${tableName}`);
     }
 
-    // 将 rawTable 传递给统一的 processTableSchema 加工修饰
-    return processTableSchema(rawTable, 'spring-boot');
+    // 将 rawTable 转换为 TableSchema（类型映射等由 runner 中的 processTableSchema 统一完成）
+    return {
+      name: rawTable.name,
+      className: toClassName(rawTable.name),
+      comment: rawTable.comment,
+      columns: rawTable.columns.map((c) => ({
+        name: c.name,
+        propertyName: toPropertyName(c.name, 'java'),
+        sqlType: c.sqlType,
+        rawType: c.rawType || c.sqlType,
+        length: c.length,
+        precision: c.precision,
+        scale: c.scale,
+        nullable: c.nullable !== false,
+        defaultValue: c.defaultValue,
+        comment: c.comment,
+        isPrimaryKey: !!c.isPrimaryKey,
+        isAutoIncrement: !!c.isAutoIncrement,
+        javaType: '',
+        goType: '',
+        pythonType: '',
+        phpType: '',
+        tsType: '',
+      })),
+      primaryKey: rawTable.columns.filter((c: any) => c.isPrimaryKey).map((c: any) => c.name),
+      indexes: rawTable.indexes || [],
+      foreignKeys: rawTable.foreignKeys || [],
+    };
   }
 
   async close(): Promise<void> {
@@ -76,8 +102,10 @@ export class DdlAdapter implements DatasourceAdapter {
         const astList = this.parser.astify(statement);
         const ast = Array.isArray(astList) ? astList[0] : astList;
 
-        if (ast && ast.type === 'create' && ast.keyword === 'table') {
-          const tableName = ast.table[0].table;
+        if (ast && ast.type === 'create' && (ast as any).keyword === 'table') {
+          const tableRef = Array.isArray(ast.table) ? ast.table[0] : (ast.table as any);
+          const tableName = tableRef?.table || '';
+          if (!tableName) continue;
           const createDefinitions = ast.create_definitions || [];
 
           const columns: any[] = [];
@@ -88,19 +116,22 @@ export class DdlAdapter implements DatasourceAdapter {
           for (const def of createDefinitions) {
             // A. 处理列定义
             if (def.resource === 'column') {
-              const colName = def.column.column;
-              const dataType = def.definition.dataType;
-              const suffix = def.definition.suffix || [];
-              const comment = def.comment?.value?.value || '';
+              const colName = (def.column as any)?.column || (def.column as any)?.expr?.column || '';
+              const dataType = (def.definition as any)?.dataType || '';
+              const suffix: string[] = ((def.definition as any)?.suffix || []) as string[];
+              const comment =
+                typeof def.comment === 'string'
+                  ? def.comment
+                  : ((def.comment as any)?.value?.value as string) || '';
 
               const isPrimaryKey =
                 suffix.includes('PRIMARY') ||
                 suffix.includes('KEY') ||
-                def.primary_key === 'primary key';
+                (def as any).primary_key === 'primary key';
               const isAutoIncrement =
                 suffix.includes('AUTO_INCREMENT') ||
                 suffix.includes('auto_increment') ||
-                def.auto_increment === 'auto_increment' ||
+                (def as any).auto_increment === 'auto_increment' ||
                 statement.toLowerCase().includes(`${colName.toLowerCase()} serial`);
 
               if (isPrimaryKey) {
@@ -117,8 +148,9 @@ export class DdlAdapter implements DatasourceAdapter {
               }
 
               let nullable = true;
-              if (def.nullable) {
-                nullable = def.nullable.value !== 'not null' && def.nullable.type !== 'not null';
+              const nullableDef = def.nullable as any;
+              if (nullableDef) {
+                nullable = nullableDef.value !== 'not null' && nullableDef.type !== 'not null';
               } else {
                 nullable = !suffix.includes('NOT');
               }
@@ -128,7 +160,7 @@ export class DdlAdapter implements DatasourceAdapter {
                 sqlType: dataType,
                 rawType: dataType + (length ? `(${length})` : ''),
                 nullable,
-                defaultValue: undefined, // DDL parse results can omit this for simplicity
+                defaultValue: undefined as string | undefined, // DDL parse results can omit this for simplicity
                 comment,
                 isPrimaryKey,
                 isAutoIncrement,
@@ -138,19 +170,20 @@ export class DdlAdapter implements DatasourceAdapter {
               });
             }
             // B. 处理主键约束
-            else if (def.constraint_type?.toLowerCase() === 'primary key') {
-              const keys = (def.definition || []).map((k: any) => k.column || k);
+            else if ((def as any).constraint_type?.toLowerCase() === 'primary key') {
+              const keys = ((def as any).definition || []).map((k: any) => k.column || k);
               primaryKeyColumns.push(...keys);
             }
             // C. 处理外键约束
-            else if (def.constraint_type?.toLowerCase() === 'foreign key') {
-              const localCols = (def.definition || []).map((k: any) => k.column || k);
-              const refTable = def.reference_definition.table[0].table;
-              const refCols = (def.reference_definition.definition || []).map(
-                (k: any) => k.column || k,
-              );
+            else if ((def as any).constraint_type?.toLowerCase() === 'foreign key') {
+              const localCols = ((def as any).definition || []).map((k: any) => k.column || k);
+              const refDef = (def as any).reference_definition;
+              const refTable = Array.isArray(refDef?.table)
+                ? refDef.table[0]?.table
+                : refDef?.table?.table || '';
+              const refCols = (refDef?.definition || []).map((k: any) => k.column || k);
               foreignKeys.push({
-                name: def.constraint || `fk_${tableName}_${refTable}`,
+                name: (def as any).constraint || `fk_${tableName}_${refTable}`,
                 columnNames: localCols,
                 referencedTableName: refTable,
                 referencedColumnNames: refCols,

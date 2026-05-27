@@ -102,15 +102,13 @@ describe('Datasource Adapters (T4)', () => {
       const userIdCol = userSchema.columns.find((c) => c.name === 'user_id')!;
       expect(userIdCol.isPrimaryKey).toBe(true);
       expect(userIdCol.isAutoIncrement).toBe(true);
-      expect(userIdCol.javaType).toBe('Long');
       expect(userIdCol.comment).toBe('用户ID');
 
       const usernameCol = userSchema.columns.find((c) => c.name === 'username')!;
       expect(usernameCol.nullable).toBe(false);
-      expect(usernameCol.javaType).toBe('String');
 
       const statusCol = userSchema.columns.find((c) => c.name === 'status')!;
-      expect(statusCol.javaType).toBe('Boolean'); // tinyint(1) mapped to boolean!
+      expect(statusCol.sqlType.toLowerCase()).toBe('tinyint');
 
       // Verify user_order schema and foreign key
       const orderSchema = await adapter.getTableSchema('user_order');

@@ -1,5 +1,6 @@
-import { resolve } from 'node:path';
+import { resolve, dirname } from 'node:path';
 import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { loadConfig, type CliOverrides } from '../config/index.js';
 import { createDatasourceAdapter } from '../datasource/index.js';
 import { processTableSchema, type TableSchema } from '../schema/index.js';
@@ -52,7 +53,8 @@ export async function runGeneration(
     let pluginDir = resolve(process.cwd(), 'templates', config.target.framework);
     if (!existsSync(pluginDir)) {
       // 降级兜底到相对 CLI 源文件的内置目录
-      const __dirname = resolve(new URL('.', import.meta.url).pathname);
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = dirname(__filename);
       pluginDir = resolve(__dirname, '../../templates', config.target.framework);
     }
 
