@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: {{propertyName projectClassName}}
+  
+  datasource:
+    url: ${DB_URL:{{config.datasource.url}} }
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: {{#if (eq config.datasource.type "postgresql")}}org.postgresql.Driver{{else}}com.mysql.cj.jdbc.Driver{{/if}}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: {{#if (eq config.datasource.type "postgresql")}}org.hibernate.dialect.PostgreSQLDialect{{else}}org.hibernate.dialect.MySQLDialect{{/if}}
+
+server:
+  port: 8080
+
+{{#if features.swagger}}
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+{{/if}}

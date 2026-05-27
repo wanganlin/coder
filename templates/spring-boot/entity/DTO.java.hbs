@@ -1,0 +1,49 @@
+package {{package}}.dto;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import jakarta.validation.constraints.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.math.BigDecimal;
+
+{{#if features.swagger}}
+import io.swagger.v3.oas.annotations.media.Schema;
+{{/if}}
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+{{#if features.swagger}}
+@Schema(description = "Data Transfer Object for {{className}} ({{tableComment}})")
+{{/if}}
+public class {{className}}DTO {
+
+    {{#each columns}}
+    {{#if (and ../features.auditFields (or (eq name "created_at") (or (eq name "updated_at") (or (eq name "created_by") (eq name "updated_by")))))}}
+    // 审计字段不包含在基本 DTO 中
+    {{else}}
+    {{#unless nullable}}
+    {{#unless isAutoIncrement}}
+    @NotNull(message = "{{propertyName name}} is required")
+    {{/unless}}
+    {{/unless}}
+    {{#if length}}
+    {{#if (eq javaType "String")}}
+    @Size(max = {{length}}, message = "{{propertyName name}} length cannot exceed {{length}}")
+    {{/if}}
+    {{/if}}
+    {{#if ../features.swagger}}
+    @Schema(description = "{{comment}}")
+    {{/if}}
+    private {{javaType}} {{propertyName name}};
+
+    {{/if}}
+    {{/each}}
+}

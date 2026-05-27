@@ -1,0 +1,24 @@
+name: spring-boot
+language: java
+paradigm: layered
+fileExtension: .java
+skeleton:
+  - template: skeleton/pom.xml.hbs
+    output: pom.xml
+  - template: skeleton/application.yml.hbs
+    output: src/main/resources/application.yml
+  - template: skeleton/Application.java.hbs
+    output: src/main/java/{{packagePath}}/{{projectClassName}}Application.java
+  - template: skeleton/BaseEntity.java.hbs
+    output: src/main/java/{{packagePath}}/entity/BaseEntity.java
+entityTemplates:
+  - template: entity/Entity.java.hbs
+    output: src/main/java/{{packagePath}}/entity/{{className}}.java
+  - template: entity/Repository.java.hbs
+    output: src/main/java/{{packagePath}}/repository/{{className}}Repository.java
+  - template: entity/Service.java.hbs
+    output: src/main/java/{{packagePath}}/service/{{className}}Service.java
+  - template: entity/Controller.java.hbs
+    output: src/main/java/{{packagePath}}/controller/{{className}}Controller.java
+  - template: entity/DTO.java.hbs
+    output: src/main/java/{{packagePath}}/dto/{{className}}DTO.java

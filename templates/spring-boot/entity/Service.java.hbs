@@ -1,0 +1,46 @@
+package {{package}}.service;
+
+import {{package}}.entity.{{className}};
+import {{package}}.repository.{{className}}Repository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+@Transactional
+public class {{className}}Service {
+
+    private final {{className}}Repository repository;
+
+    public {{className}}Service({{className}}Repository repository) {
+        this.repository = repository;
+    }
+
+    @Transactional(readOnly = true)
+    public List<{{className}}> findAll() {
+        return repository.findAll();
+    }
+
+    {{#if features.pagination}}
+    @Transactional(readOnly = true)
+    public Page<{{className}}> findAll(Pageable pageable) {
+        return repository.findAll(pageable);
+    }
+    {{/if}}
+
+    @Transactional(readOnly = true)
+    public Optional<{{className}}> findById({{#if primaryKey.length}}{{#each columns}}{{#if isPrimaryKey}}{{javaType}}{{/if}}{{/each}}{{else}}Long{{/if}} id) {
+        return repository.findById(id);
+    }
+
+    public {{className}} save({{className}} entity) {
+        return repository.save(entity);
+    }
+
+    public void deleteById({{#if primaryKey.length}}{{#each columns}}{{#if isPrimaryKey}}{{javaType}}{{/if}}{{/each}}{{else}}Long{{/if}} id) {
+        repository.deleteById(id);
+    }
+}

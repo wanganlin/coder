@@ -1,0 +1,25 @@
+package {{package}}.repository;
+
+import {{package}}.entity.{{className}};
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.stereotype.Repository;
+import java.util.Optional;
+import java.util.List;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Repository
+public interface {{className}}Repository extends JpaRepository<{{className}}, {{#if primaryKey.length}}{{#each columns}}{{#if isPrimaryKey}}{{javaType}}{{/if}}{{/each}}{{else}}Long{{/if}}>, JpaSpecificationExecutor<{{className}}> {
+    
+    // ==========================================
+    // 自动推导索引查询方法
+    // ==========================================
+    {{#each indexes}}
+    {{#if unique}}
+    Optional<{{../className}}> findBy{{#each columns}}{{pascalCase this}}{{/each}}({{#each columns}}{{#with (findColumn ../../columns this)}}{{javaType}} {{propertyName name}}{{/with}}{{#unless @last}}, {{/unless}}{{/each}});
+    {{else}}
+    List<{{../className}}> findBy{{#each columns}}{{pascalCase this}}{{/each}}({{#each columns}}{{#with (findColumn ../../columns this)}}{{javaType}} {{propertyName name}}{{/with}}{{#unless @last}}, {{/unless}}{{/each}});
+    {{/if}}
+    {{/each}}
+}

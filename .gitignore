@@ -1,0 +1,23 @@
+node_modules/
+dist/
+*.js
+*.d.ts
+*.map
+!vitest.config.ts
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Env
+.env
+.env.local
+
+# Coder internal
+.coder/

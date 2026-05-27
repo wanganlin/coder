@@ -1,0 +1,107 @@
+package {{package}}.controller;
+
+import {{package}}.entity.{{className}};
+import {{package}}.service.{{className}}Service;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import jakarta.validation.Valid;
+import java.util.List;
+
+{{#if features.swagger}}
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+{{/if}}
+
+@RestController
+@RequestMapping("/api/v1/{{pluralName}}")
+{{#if features.swagger}}
+@Tag(name = "{{className}} Controller", description = "REST APIs for {{className}} ({{tableComment}})")
+{{/if}}
+public class {{className}}Controller {
+
+    private final {{className}}Service service;
+
+    public {{className}}Controller({{className}}Service service) {
+        this.service = service;
+    }
+
+    @GetMapping
+    {{#if features.swagger}}
+    @Operation(summary = "Get list of all {{className}} entities (supports paging)")
+    {{/if}}
+    public ResponseEntity<?> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "false") boolean unpaged) {
+        
+        if (unpaged) {
+            return ResponseEntity.ok(service.findAll());
+        }
+        
+        {{#if features.pagination}}
+        Page<{{className}}> dataPage = service.findAll(PageRequest.of(page, size));
+        return ResponseEntity.ok(dataPage);
+        {{else}}
+        return ResponseEntity.ok(service.findAll());
+        {{/if}}
+    }
+
+    @GetMapping("/{id}")
+    {{#if features.swagger}}
+    @Operation(summary = "Get a single {{className}} by ID")
+    {{/if}}
+    public ResponseEntity<{{className}}> getById(@PathVariable {{#if primaryKey.length}}{{#each columns}}{{#if isPrimaryKey}}{{javaType}}{{/if}}{{/each}}{{else}}Long{{/if}} id) {
+        return service.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    {{#if features.swagger}}
+    @Operation(summary = "Create a new {{className}} entity")
+    {{/if}}
+    public ResponseEntity<{{className}}> create(@Valid @RequestBody {{className}} entity) {
+        {{className}} saved = service.save(entity);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    @PutMapping("/{id}")
+    {{#if features.swagger}}
+    @Operation(summary = "Update an existing {{className}} by ID")
+    {{/if}}
+    public ResponseEntity<{{className}}> update(
+            @PathVariable {{#if primaryKey.length}}{{#each columns}}{{#if isPrimaryKey}}{{javaType}}{{/if}}{{/each}}{{else}}Long{{/if}} id,
+            @Valid @RequestBody {{className}} entity) {
+        
+        return service.findById(id)
+                .map(existing -> {
+                    // Update keys
+                    {{#each columns}}
+                    {{#if (not isPrimaryKey)}}
+                    {{#if (and ../features.auditFields (or (eq name "created_at") (or (eq name "updated_at") (or (eq name "created_by") (eq name "updated_by")))))}}
+                    {{else}}
+                    existing.set{{pascalCase name}}(entity.get{{pascalCase name}}());
+                    {{/if}}
+                    {{/if}}
+                    {{/each}}
+                    {{className}} updated = service.save(existing);
+                    return ResponseEntity.ok(updated);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    {{#if features.swagger}}
+    @Operation(summary = "Delete an entity by ID")
+    {{/if}}
+    public ResponseEntity<Void> deleteById(@PathVariable {{#if primaryKey.length}}{{#each columns}}{{#if isPrimaryKey}}{{javaType}}{{/if}}{{/each}}{{else}}Long{{/if}} id) {
+        if (service.findById(id).isPresent()) {
+            service.deleteById(id);
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+}
