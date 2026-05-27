@@ -1,0 +1,156 @@
+package handler
+
+import (
+	"net/http"
+	"strconv"
+	"{{propertyName projectClassName}}/db"
+	"{{propertyName projectClassName}}/model"
+	"github.com/gin-gonic/gin"
+)
+
+func Register{{className}}Routes(rg *gin.RouterGroup) {
+	rg.GET("/{{pluralize propertyName}}", Get{{className}}List)
+	rg.GET("/{{pluralize propertyName}}/:id", Get{{className}}ByID)
+	rg.POST("/{{pluralize propertyName}}", Create{{className}})
+	rg.PUT("/{{pluralize propertyName}}/:id", Update{{className}})
+	rg.DELETE("/{{pluralize propertyName}}/:id", Delete{{className}})
+}
+
+func Get{{className}}List(c *gin.Context) {
+	var items []model.{{className}}
+
+	{{#if features.pagination}}
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "0"))
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
+	if size <= 0 {
+		size = 10
+	}
+	offset := page * size
+
+	var total int64
+	db.DB.Model(&model.{{className}}{}).Count(&total)
+	db.DB.Limit(size).Offset(offset).Find(&items)
+
+	c.JSON(http.StatusOK, gin.H{
+		"content":       items,
+		"totalElements": total,
+		"page":          page,
+		"size":          size,
+	})
+	{{else}}
+	db.DB.Find(&items)
+	c.JSON(http.StatusOK, items)
+	{{/if}}
+}
+
+func Get{{className}}ByID(c *gin.Context) {
+	{{#each columns}}{{#if isPrimaryKey}}
+	{{#if (eq goType "string")}}
+	id := c.Param("id")
+	{{else}}
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		return
+	}
+	{{/if}}
+	{{/if}}{{/each}}
+
+	var item model.{{className}}
+	if err := db.DB.First(&item, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "{{className}} not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, item)
+}
+
+func Create{{className}}(c *gin.Context) {
+	var req model.Create{{className}}Request
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	item := model.{{className}}{
+		{{#each columns}}
+		{{#unless isAutoIncrement}}
+		{{pascalCase name}}: req.{{pascalCase name}},
+		{{/unless}}
+		{{/each}}
+	}
+
+	if err := db.DB.Create(&item).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, item)
+}
+
+func Update{{className}}(c *gin.Context) {
+	{{#each columns}}{{#if isPrimaryKey}}
+	{{#if (eq goType "string")}}
+	id := c.Param("id")
+	{{else}}
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		return
+	}
+	{{/if}}
+	{{/if}}{{/each}}
+
+	var item model.{{className}}
+	if err := db.DB.First(&item, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "{{className}} not found"})
+		return
+	}
+
+	var req model.Update{{className}}Request
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 更新属性
+	{{#each columns}}
+	{{#unless isPrimaryKey}}
+	item.{{pascalCase name}} = req.{{pascalCase name}}
+	{{/unless}}
+	{{/each}}
+
+	if err := db.DB.Save(&item).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, item)
+}
+
+func Delete{{className}}(c *gin.Context) {
+	{{#each columns}}{{#if isPrimaryKey}}
+	{{#if (eq goType "string")}}
+	id := c.Param("id")
+	{{else}}
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		return
+	}
+	{{/if}}
+	{{/if}}{{/each}}
+
+	var item model.{{className}}
+	if err := db.DB.First(&item, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "{{className}} not found"})
+		return
+	}
+
+	if err := db.DB.Delete(&item).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusNoContent, nil)
+}

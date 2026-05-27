@@ -1,0 +1,17 @@
+package model
+
+// Create{{className}}Request 创建请求负载
+type Create{{className}}Request struct {
+	{{#each columns}}
+	{{#unless isAutoIncrement}}
+	{{pascalCase name}} {{goType}} `json:"{{propertyName name}}"{{#unless nullable}} binding:"required"{{/unless}}`
+	{{/unless}}
+	{{/each}}
+}
+
+// Update{{className}}Request 更新请求负载
+type Update{{className}}Request struct {
+	{{#each columns}}
+	{{pascalCase name}} {{goType}} `json:"{{propertyName name}}"{{#unless nullable}} binding:"required"{{/unless}}`
+	{{/each}}
+}

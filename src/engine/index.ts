@@ -59,7 +59,7 @@ export class TemplateEngine {
   /**
    * 渲染骨架层文件 (在整个项目生命周期中只运行一次)
    */
-  renderSkeleton(config: CoderConfig): FileOutput[] {
+  renderSkeleton(config: CoderConfig, tables: TableSchema[] = []): FileOutput[] {
     const metadata = this.getPluginMetadata();
     const result: FileOutput[] = [];
 
@@ -67,7 +67,10 @@ export class TemplateEngine {
       return result;
     }
 
-    const context = this.buildContext(config);
+    const context = {
+      ...this.buildContext(config),
+      tables,
+    };
 
     for (const item of metadata.skeleton) {
       const templatePath = resolve(this.pluginDir, item.template);

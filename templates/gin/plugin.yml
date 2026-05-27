@@ -1,0 +1,20 @@
+name: gin
+language: go
+paradigm: lightweight
+fileExtension: .go
+skeleton:
+  - template: skeleton/go.mod.hbs
+    output: go.mod
+  - template: skeleton/db.go.hbs
+    output: db/db.go
+  - template: skeleton/main.go.hbs
+    output: main.go
+  - template: skeleton/router.go.hbs
+    output: router.go
+entityTemplates:
+  - template: entity/model.go.hbs
+    output: model/{{snakeCase tableName}}.go
+  - template: entity/dto.go.hbs
+    output: model/{{snakeCase tableName}}_dto.go
+  - template: entity/handler.go.hbs
+    output: handler/{{snakeCase tableName}}.go

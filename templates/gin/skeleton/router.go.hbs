@@ -1,0 +1,15 @@
+package main
+
+import (
+	"{{package}}/handler"
+	"github.com/gin-gonic/gin"
+)
+
+func RegisterRoutes(r *gin.Engine) {
+	api := r.Group("/api/v1")
+	{
+		{{#each tables}}
+		handler.Register{{className}}Routes(api)
+		{{/each}}
+	}
+}

@@ -1,0 +1,17 @@
+package model
+
+import (
+	"time"
+)
+
+// {{className}} {{tableComment}}
+type {{className}} struct {
+	{{#each columns}}
+	{{pascalCase name}} {{goType}} `gorm:"column:{{name}}{{#if isPrimaryKey}};primaryKey{{#if isAutoIncrement}};autoIncrement{{/if}}{{/if}}{{#unless nullable}};not null{{/unless}}" json:"{{propertyName name}}"`
+	{{/each}}
+}
+
+// TableName 指定 GORM 表名
+func ({{className}}) TableName() string {
+	return "{{tableName}}"
+}

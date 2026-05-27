@@ -1,0 +1,31 @@
+package db
+
+import (
+	"fmt"
+	"os"
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+)
+
+var DB *gorm.DB
+
+func InitDB() {
+	dsn := os.Getenv("DB_DSN")
+	if dsn == "" {
+		dsn = "{{config.datasource.url}}"
+	}
+
+	var err error
+	dbType := "{{config.datasource.type}}"
+
+	if dbType == "postgresql" {
+		DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	} else {
+		DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	}
+
+	if err != nil {
+		panic(fmt.Sprintf("Failed to connect to database: %v", err))
+	}
+}

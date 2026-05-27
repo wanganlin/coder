@@ -59,7 +59,7 @@ export async function runGeneration(
     engine.loadPlugin(pluginDir);
 
     // 6. 渲染骨架层
-    const skeletonFiles = engine.renderSkeleton(config);
+    const skeletonFiles = engine.renderSkeleton(config, decoratedSchemas);
 
     // 7. 渲染实体层
     const entityFiles = [];
