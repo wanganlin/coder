@@ -1,0 +1,33 @@
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
+
+const routes: RouteRecordRaw[] = [
+  {
+    path: '/',
+    name: 'Home',
+    component: () => import('@/views/Home.vue'),
+  },
+  {{#each tables}}
+  {
+    path: '/{{kebabCase name}}',
+    name: '{{className}}List',
+    component: () => import('@/views/{{kebabCase name}}/ListView.vue'),
+  },
+  {
+    path: '/{{kebabCase name}}/create',
+    name: '{{className}}Create',
+    component: () => import('@/views/{{kebabCase name}}/FormView.vue'),
+  },
+  {
+    path: '/{{kebabCase name}}/:id/edit',
+    name: '{{className}}Edit',
+    component: () => import('@/views/{{kebabCase name}}/FormView.vue'),
+  },
+  {{/each}}
+];
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes,
+});
+
+export default router;

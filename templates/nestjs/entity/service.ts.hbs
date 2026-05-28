@@ -1,0 +1,67 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, Like } from 'typeorm';
+import { {{className}} } from '../entity/{{kebabCase tableName}}.entity';
+import { Create{{className}}Dto, Update{{className}}Dto } from '../dto/{{kebabCase tableName}}.dto';
+
+@Injectable()
+export class {{className}}Service {
+  constructor(
+    @InjectRepository({{className}})
+    private readonly repository: Repository<{{className}}>,
+  ) {}
+
+  {{#if features.pagination}}
+  async findAll(
+    page: number = 0,
+    size: number = 10,
+  ): Promise<{ content: {{className}}[]; total: number; page: number; size: number }> {
+    const [content, total] = await this.repository.findAndCount({
+      skip: page * size,
+      take: size,
+      {{#if table.relationships.length}}
+      relations: [{{#each table.relationships}}'{{#if (eq type "ManyToOne")}}{{targetPropertyName}}{{/if}}{{#if (eq type "OneToMany")}}{{targetPropertyName}}List{{/if}}'{{#unless @last}}, {{/unless}}{{/each}}],
+      {{/if}}
+      order: { {{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}: 'DESC'{{/if}}{{/each}} },
+    });
+    return { content, total, page, size };
+  }
+  {{else}}
+  async findAll(): Promise<{{className}}[]> {
+    return this.repository.find({
+      {{#if table.relationships.length}}
+      relations: [{{#each table.relationships}}'{{#if (eq type "ManyToOne")}}{{targetPropertyName}}{{/if}}{{#if (eq type "OneToMany")}}{{targetPropertyName}}List{{/if}}'{{#unless @last}}, {{/unless}}{{/each}}],
+      {{/if}}
+    });
+  }
+  {{/if}}
+
+  async findById({{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}: {{tsType}}{{/if}}{{/each}}): Promise<{{className}}> {
+    const entity = await this.repository.findOne({
+      where: { {{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}{{/if}}{{/each}} },
+      {{#if table.relationships.length}}
+      relations: [{{#each table.relationships}}'{{#if (eq type "ManyToOne")}}{{targetPropertyName}}{{/if}}{{#if (eq type "OneToMany")}}{{targetPropertyName}}List{{/if}}'{{#unless @last}}, {{/unless}}{{/each}}],
+      {{/if}}
+    });
+    if (!entity) {
+      throw new NotFoundException(`{{className}} with id ${ {{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}{{/if}}{{/each}} } not found`);
+    }
+    return entity;
+  }
+
+  async create(dto: Create{{className}}Dto): Promise<{{className}}> {
+    const entity = this.repository.create(dto as any);
+    return this.repository.save(entity);
+  }
+
+  async update({{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}: {{tsType}}, {{/if}}{{/each}}dto: Update{{className}}Dto): Promise<{{className}}> {
+    const entity = await this.findById({{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}{{/if}}{{/each}});
+    Object.assign(entity, dto);
+    return this.repository.save(entity);
+  }
+
+  async delete({{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}: {{tsType}}{{/if}}{{/each}}): Promise<void> {
+    const entity = await this.findById({{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}{{/if}}{{/each}});
+    await this.repository.remove(entity);
+  }
+}

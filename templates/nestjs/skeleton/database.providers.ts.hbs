@@ -1,0 +1,47 @@
+import { DataSource } from 'typeorm';
+
+const dbType = '{{config.datasource.type}}';
+const dbUrl = '{{config.datasource.url}}';
+
+function parseConnectionString(url: string) {
+  {{#if (eq config.datasource.type "mysql")}}
+  const parsed = new URL(url.replace('mysql://', 'http://'));
+  return {
+    host: parsed.hostname,
+    port: parseInt(parsed.port || '3306'),
+    username: parsed.username,
+    password: parsed.password,
+    database: parsed.pathname.replace('/', ''),
+  };
+  {{else}}
+  const parsed = new URL(url.replace('postgresql://', 'http://'));
+  return {
+    host: parsed.hostname,
+    port: parseInt(parsed.port || '5432'),
+    username: parsed.username,
+    password: parsed.password,
+    database: parsed.pathname.replace('/', ''),
+  };
+  {{/if}}
+}
+
+export const databaseProviders = [
+  {
+    provide: 'DATA_SOURCE',
+    useFactory: async () => {
+      const conn = parseConnectionString(dbUrl);
+      const dataSource = new DataSource({
+        type: dbType === 'mysql' ? 'mysql' : 'postgres',
+        host: conn.host,
+        port: conn.port,
+        username: conn.username,
+        password: conn.password,
+        database: conn.database,
+        entities: [__dirname + '/../entity/**/*.entity{.ts,.js}'],
+        synchronize: false,
+        logging: false,
+      });
+      return dataSource.initialize();
+    },
+  },
+];

@@ -1,0 +1,27 @@
+import eslint from '@eslint/js';
+import tseslint from 'typescript-eslint';
+
+export default tseslint.config({
+  extends: [
+    eslint.configs.recommended,
+    ...tseslint.configs.recommended,
+  ],
+  files: ['src/**/*.ts'],
+  languageOptions: {
+    parser: tseslint.parser,
+    parserOptions: {
+      project: './tsconfig.json',
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+  rules: {
+    '@typescript-eslint/no-explicit-any': 'warn',
+    '@typescript-eslint/explicit-function-return-type': 'off',
+    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+  },
+  {{#if features.unitTest}}
+  ignores: ['dist/**', 'node_modules/**', 'test/**'],
+  {{else}}
+  ignores: ['dist/**', 'node_modules/**'],
+  {{/if}}
+});

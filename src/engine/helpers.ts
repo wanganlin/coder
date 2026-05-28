@@ -89,4 +89,14 @@ export function registerAllHelpers(hbs: typeof Handlebars): void {
     const name = col.name || '';
     return ['created_at', 'updated_at', 'created_by', 'updated_by'].includes(name);
   });
+
+  // Deep object lookup helper (for accessing nested properties dynamically)
+  hbs.registerHelper('lookup', (obj: any, key: string, prop?: string) => {
+    if (!obj || typeof obj !== 'object') return undefined;
+    const val = obj[key];
+    if (prop && val && typeof val === 'object') {
+      return val[prop];
+    }
+    return val;
+  });
 }

@@ -1,0 +1,59 @@
+{{#if features.swagger}}
+import { ApiProperty, ApiPropertyOptional, PartialType, PickType, OmitType } from '@nestjs/swagger';
+import { IsString, IsNumber, IsBoolean, IsOptional, MaxLength, IsDate, IsNotEmpty } from 'class-validator';
+import { Type } from 'class-transformer';
+import { {{className}} } from '../entity/{{kebabCase tableName}}.entity';
+{{/if}}
+
+export class Create{{className}}Dto {
+  {{#each columns}}
+  {{#unless isPrimaryKey}}
+  {{#unless isAutoIncrement}}
+  {{#if (and ../features.auditFields (isAuditField this))}}
+  // 审计字段 {{name}} 由服务层自动填充
+  {{else}}
+  {{#if ../features.swagger}}
+  {{#if nullable}}
+  @ApiPropertyOptional({ description: '{{comment}}' })
+  @IsOptional()
+  {{else}}
+  @ApiProperty({ description: '{{comment}}', required: true })
+  @IsNotEmpty()
+  {{/if}}
+  {{#if (eq tsType "string")}}
+  @IsString()
+  {{#if (eq sqlType "varchar")}}
+  @MaxLength({{#if length}}{{length}}{{else}}255{{/if}})
+  {{/if}}
+  {{/if}}
+  {{#if (eq tsType "number")}}
+  @IsNumber()
+  {{/if}}
+  {{#if (eq tsType "boolean")}}
+  @IsBoolean()
+  {{/if}}
+  {{#if (or (eq tsType "Date") (eq tsType "string") (eq sqlType "datetime") (eq sqlType "date"))}}
+  {{#if (eq tsType "Date")}}
+  @Type(() => Date)
+  {{/if}}
+  {{/if}}
+  {{/if}}
+  {{propertyName name lang="typescript"}}{{#if nullable}}?{{/if}}: {{#if (eq tsType "Date")}}Date{{else}}{{tsType}}{{/if}};
+
+  {{/if}}
+  {{/unless}}
+  {{/unless}}
+  {{/each}}
+}
+
+export class Update{{className}}Dto extends PartialType(Create{{className}}Dto) {}
+
+export class {{className}}Response {
+  {{#each columns}}
+  {{#if ../features.swagger}}
+  @ApiProperty({ description: '{{comment}}' })
+  {{/if}}
+  {{propertyName name lang="typescript"}}: {{#if (eq tsType "Date")}}Date{{else}}{{tsType}}{{/if}};
+
+  {{/each}}
+}

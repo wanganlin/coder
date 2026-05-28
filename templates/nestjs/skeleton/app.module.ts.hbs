@@ -1,0 +1,27 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { databaseProviders } from './database/database.providers';
+
+{{#each tables}}
+import { {{className}} } from './entity/{{kebabCase name}}.entity';
+import { {{className}}Module } from './module/{{kebabCase name}}.module';
+{{/each}}
+
+@Module({
+  imports: [
+    TypeOrmModule.forRootAsync({
+      useFactory: async () => {
+        const dataSource = await databaseProviders[0].useFactory();
+        return {
+          ...dataSource.options,
+          entities: [__dirname + '/entity/**/*.entity{.ts,.js}'],
+          synchronize: false,
+        };
+      },
+    }),
+    {{#each tables}}
+    {{className}}Module,
+    {{/each}}
+  ],
+})
+export class AppModule {}

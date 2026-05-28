@@ -1,0 +1,154 @@
+<template>
+  <div class="list-container">
+    <el-card>
+      <template #header>
+        <div class="card-header">
+          <span>{{className}} 管理</span>
+          <el-button type="primary" @click="goCreate">
+            <el-icon><Plus /></el-icon>
+            新增
+          </el-button>
+        </div>
+      </template>
+
+      <el-table
+        :data="tableData"
+        border
+        stripe
+        v-loading="loading"
+        style="width: 100%"
+      >
+        {{#each columns}}
+        {{#if (and ../features.auditFields (isAuditField this))}}
+        <!-- 审计字段 {{name}} 不显示 -->
+        {{else}}
+        <el-table-column
+          prop="{{propertyName name lang="typescript"}}"
+          label="{{#if comment}}{{comment}}{{else}}{{name}}{{/if}}"
+          {{#if isPrimaryKey}}width="80"{{/if}}
+        />
+        {{/if}}
+        {{/each}}
+        <el-table-column label="操作" width="180" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" type="primary" @click="goEdit(row)">
+              编辑
+            </el-button>
+            <el-button size="small" type="danger" @click="handleDelete(row)">
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      {{#if features.pagination}}
+      <div class="pagination-wrapper">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :total="total"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next"
+          @size-change="handleSizeChange"
+          @current-change="handlePageChange"
+        />
+      </div>
+      {{/if}}
+    </el-card>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import {
+  get{{className}}List,
+  delete{{className}},
+  type {{className}},
+} from '@/api/{{kebabCase tableName}}';
+
+const router = useRouter();
+const loading = ref(false);
+const tableData = ref<{{className}}[]>([]);
+{{#if features.pagination}}
+const currentPage = ref(0);
+const pageSize = ref(10);
+const total = ref(0);
+{{/if}}
+
+async function fetchData() {
+  loading.value = true;
+  try {
+    {{#if features.pagination}}
+    const res = await get{{className}}List(currentPage.value, pageSize.value);
+    tableData.value = res.content || [];
+    total.value = res.totalElements || 0;
+    {{else}}
+    tableData.value = await get{{className}}List();
+    {{/if}}
+  } finally {
+    loading.value = false;
+  }
+}
+
+function goCreate() {
+  router.push({ name: '{{className}}Create' });
+}
+
+function goEdit(row: {{className}}) {
+  const id = row.{{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}{{/if}}{{/each}};
+  router.push({ name: '{{className}}Edit', params: { id } });
+}
+
+async function handleDelete(row: {{className}}) {
+  try {
+    await ElMessageBox.confirm(
+      `确认删除该 {{className}} 记录？`,
+      '删除确认',
+      { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' },
+    );
+    const id = row.{{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}{{/if}}{{/each}};
+    await delete{{className}}(id);
+    ElMessage.success('删除成功');
+    await fetchData();
+  } catch (err: any) {
+    if (err !== 'cancel') {
+      ElMessage.error(err.message || '删除失败');
+    }
+  }
+}
+
+{{#if features.pagination}}
+function handleSizeChange(size: number) {
+  pageSize.value = size;
+  fetchData();
+}
+
+function handlePageChange(page: number) {
+  currentPage.value = page;
+  fetchData();
+}
+{{/if}}
+
+onMounted(() => {
+  fetchData();
+});
+</script>
+
+<style scoped>
+.list-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+</style>

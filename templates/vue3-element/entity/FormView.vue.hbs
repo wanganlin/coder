@@ -1,0 +1,181 @@
+<template>
+  <div class="form-container">
+    <el-card>
+      <template #header>
+        <span>\{{ isEdit ? '编辑' : '新增' }}{{className}}</span>
+      </template>
+
+      <el-form
+        ref="formRef"
+        :model="formData"
+        :rules="rules"
+        label-width="120px"
+        v-loading="loading"
+      >
+        {{#each columns}}
+        {{#unless isPrimaryKey}}
+        {{#unless isAutoIncrement}}
+        {{#if (and ../features.auditFields (isAuditField this))}}
+        <!-- 审计字段 {{name}} 由后端自动填充 -->
+        {{else}}
+        <el-form-item
+          label="{{#if comment}}{{comment}}{{else}}{{name}}{{/if}}"
+          prop="{{propertyName name lang="typescript"}}"
+        >
+          {{#if (and ../config.extensions (lookup ../config.extensions ../tableName name))}}
+          {{#if (eq (lookup (lookup ../config.extensions ../tableName) name "frontendWidget") "select")}}
+          <el-select v-model="formData.{{propertyName name lang="typescript"}}" placeholder="请选择{{#if comment}}{{comment}}{{else}}{{name}}{{/if}}" style="width: 100%">
+            {{#if (lookup (lookup ../config.extensions ../tableName) name "enum")}}
+            <el-option
+              v-for="opt in enumOptions.{{propertyName name lang="typescript"}}"
+              :key="opt"
+              :label="opt"
+              :value="opt"
+            />
+            {{/if}}
+          </el-select>
+          {{else if (eq (lookup (lookup ../config.extensions ../tableName) name "frontendWidget") "datepicker")}}
+          <el-date-picker
+            v-model="formData.{{propertyName name lang="typescript"}}"
+            type="date"
+            placeholder="请选择日期"
+            style="width: 100%"
+          />
+          {{else if (eq (lookup (lookup ../config.extensions ../tableName) name "frontendWidget") "switch")}}
+          <el-switch v-model="formData.{{propertyName name lang="typescript"}}" />
+          {{else if (eq (lookup (lookup ../config.extensions ../tableName) name "frontendWidget") "textarea")}}
+          <el-input v-model="formData.{{propertyName name lang="typescript"}}" type="textarea" :rows="3" placeholder="请输入{{#if comment}}{{comment}}{{else}}{{name}}{{/if}}" />
+          {{else}}
+          <el-input v-model="formData.{{propertyName name lang="typescript"}}" placeholder="请输入{{#if comment}}{{comment}}{{else}}{{name}}{{/if}}" />
+          {{/if}}
+          {{else}}
+          {{#if (eq tsType "number")}}
+          <el-input-number v-model="formData.{{propertyName name lang="typescript"}}" style="width: 100%" placeholder="请输入{{#if comment}}{{comment}}{{else}}{{name}}{{/if}}" />
+          {{else if (eq tsType "boolean")}}
+          <el-switch v-model="formData.{{propertyName name lang="typescript"}}" />
+          {{else if (or (eq tsType "Date") (eq sqlType "datetime") (eq sqlType "date"))}}
+          <el-date-picker
+            v-model="formData.{{propertyName name lang="typescript"}}"
+            type="{{#if (eq sqlType "date")}}date{{else}}datetime{{/if}}"
+            placeholder="请选择日期"
+            style="width: 100%"
+          />
+          {{else}}
+          <el-input v-model="formData.{{propertyName name lang="typescript"}}" placeholder="请输入{{#if comment}}{{comment}}{{else}}{{name}}{{/if}}" />
+          {{/if}}
+          {{/if}}
+        </el-form-item>
+        {{/if}}
+        {{/unless}}
+        {{/unless}}
+        {{/each}}
+
+        <el-form-item>
+          <el-button type="primary" @click="handleSubmit" :loading="submitting">
+            \{{ isEdit ? '保存修改' : '立即创建' }}
+          </el-button>
+          <el-button @click="goBack">取消</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { ElMessage } from 'element-plus';
+import type { FormInstance, FormRules } from 'element-plus';
+import {
+  get{{className}}ById,
+  create{{className}},
+  update{{className}},
+  type {{className}}CreateParams,
+} from '@/api/{{kebabCase tableName}}';
+
+const router = useRouter();
+const route = useRoute();
+const formRef = ref<FormInstance>();
+const loading = ref(false);
+const submitting = ref(false);
+
+const editId = computed(() => {
+  const id = route.params.id;
+  return id ? {{#each columns}}{{#if isPrimaryKey}}{{#if (eq tsType "number")}}Number(id){{else}}String(id){{/if}}{{/if}}{{/each}} : null;
+});
+
+const isEdit = computed(() => !!editId.value);
+
+const formData = ref<{{className}}CreateParams>({
+  {{#each columns}}
+  {{#unless isPrimaryKey}}
+  {{#unless isAutoIncrement}}
+  {{#if (and ../features.auditFields (isAuditField this))}}
+  {{else}}
+  {{propertyName name lang="typescript"}}: {{#if (eq tsType "string")}}''{{else if (eq tsType "boolean")}}false{{else if (eq tsType "number")}}undefined as any{{else}}''{{/if}},
+  {{/if}}
+  {{/unless}}
+  {{/unless}}
+  {{/each}}
+});
+
+const rules = computed<FormRules>(() => ({
+  {{#each columns}}
+  {{#unless isPrimaryKey}}
+  {{#unless isAutoIncrement}}
+  {{#if (and ../features.auditFields (isAuditField this))}}
+  {{else if nullable}}
+  {{else}}
+  {{propertyName name lang="typescript"}}: [
+    { required: true, message: '请输入{{#if comment}}{{comment}}{{else}}{{name}}{{/if}}', trigger: 'blur' },
+  ],
+  {{/if}}
+  {{/unless}}
+  {{/unless}}
+  {{/each}}
+}));
+
+onMounted(async () => {
+  if (isEdit.value && editId.value !== null) {
+    loading.value = true;
+    try {
+      const detail = await get{{className}}ById(editId.value);
+      formData.value = { ...detail } as any;
+    } finally {
+      loading.value = false;
+    }
+  }
+});
+
+async function handleSubmit() {
+  const valid = await formRef.value?.validate().catch(() => false);
+  if (!valid) return;
+
+  submitting.value = true;
+  try {
+    if (isEdit.value) {
+      await update{{className}}(editId.value!, formData.value);
+      ElMessage.success('更新成功');
+    } else {
+      await create{{className}}(formData.value);
+      ElMessage.success('创建成功');
+    }
+    router.push({ name: '{{className}}List' });
+  } catch (err: any) {
+    ElMessage.error(err.message || '操作失败');
+  } finally {
+    submitting.value = false;
+  }
+}
+
+function goBack() {
+  router.push({ name: '{{className}}List' });
+}
+</script>
+
+<style scoped>
+.form-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+</style>

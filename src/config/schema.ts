@@ -27,6 +27,8 @@ export const TargetConfigSchema = z
     framework: z.string().min(1, 'target.framework is required'),
     output: z.string().default('./output'),
     package: z.string().optional(), // Java 包名，如 com.example.demo
+    frontend: z.string().optional(), // 前端框架，如 'vue3-element'
+    frontendOutput: z.string().optional(), // 前端输出目录
   })
   .catchall(z.any());
 
@@ -47,8 +49,17 @@ export const FeaturesConfigSchema = z
     unitTest: z.boolean().default(true),
     pagination: z.boolean().default(true),
     auditFields: z.boolean().default(true),
+    format: z.boolean().default(true),
+    verify: z.boolean().default(true),
   })
-  .default({ swagger: true, unitTest: true, pagination: true, auditFields: true });
+  .default({
+    swagger: true,
+    unitTest: true,
+    pagination: true,
+    auditFields: true,
+    format: true,
+    verify: true,
+  });
 
 export type FeaturesConfig = z.infer<typeof FeaturesConfigSchema>;
 

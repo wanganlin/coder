@@ -1,0 +1,28 @@
+name: nestjs
+language: typescript
+paradigm: layered
+fileExtension: .ts
+skeleton:
+  - template: skeleton/package.json.hbs
+    output: package.json
+  - template: skeleton/tsconfig.json.hbs
+    output: tsconfig.json
+  - template: skeleton/main.ts.hbs
+    output: src/main.ts
+  - template: skeleton/app.module.ts.hbs
+    output: src/app.module.ts
+  - template: skeleton/database.providers.ts.hbs
+    output: src/database/database.providers.ts
+  - template: skeleton/eslint.config.js.hbs
+    output: eslint.config.js
+entityTemplates:
+  - template: entity/entity.ts.hbs
+    output: src/entity/{{kebabCase tableName}}.entity.ts
+  - template: entity/dto.ts.hbs
+    output: src/dto/{{kebabCase tableName}}.dto.ts
+  - template: entity/service.ts.hbs
+    output: src/service/{{kebabCase tableName}}.service.ts
+  - template: entity/controller.ts.hbs
+    output: src/controller/{{kebabCase tableName}}.controller.ts
+  - template: entity/module.ts.hbs
+    output: src/module/{{kebabCase tableName}}.module.ts

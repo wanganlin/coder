@@ -1,0 +1,73 @@
+{{#if features.auditFields}}
+import { BaseEntity } from './base.entity';
+{{/if}}
+{{#if features.swagger}}
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+{{/if}}
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  PrimaryColumn,
+  Column,
+  {{#if table.relationships.length}}
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  {{/if}}
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+{{#if features.swagger}}
+import { IsString, IsNumber, IsBoolean, IsOptional, MaxLength, IsDate } from 'class-validator';
+{{/if}}
+
+@Entity('{{tableName}}')
+export class {{className}} {{#if features.auditFields}}extends BaseEntity{{/if}} {
+  {{#each columns}}
+  {{#if (and ../features.auditFields (isAuditField this))}}
+  // 审计字段 {{name}} 继承自 BaseEntity
+  {{else}}
+  {{#if isPrimaryKey}}
+  {{#if isAutoIncrement}}
+  @PrimaryGeneratedColumn({ name: '{{name}}' })
+  {{else}}
+  @PrimaryColumn({ name: '{{name}}', type: '{{#if (eq tsType "number")}}int{{else}}varchar{{/if}}' })
+  {{/if}}
+  {{else}}
+  @Column({
+    name: '{{name}}',
+    type: '{{#if (eq sqlType "varchar")}}varchar{{else if (eq sqlType "text")}}text{{else if (eq sqlType "bigint")}}bigint{{else if (eq sqlType "int")}}int{{else if (eq sqlType "tinyint")}}tinyint{{else if (eq sqlType "boolean")}}boolean{{else if (eq sqlType "datetime")}}datetime{{else if (eq sqlType "timestamp")}}timestamp{{else if (eq sqlType "date")}}date{{else if (eq sqlType "time")}}time{{else if (eq sqlType "decimal")}}decimal{{else if (eq sqlType "float")}}float{{else if (eq sqlType "double")}}double{{else if (eq sqlType "json")}}json{{else if (eq sqlType "jsonb")}}jsonb{{else}}{{sqlType}}{{/if}}'{{#if (eq sqlType "varchar")}}, length: {{#if length}}{{length}}{{else}}255{{/if}}{{/if}},
+    nullable: {{#if nullable}}true{{else}}false{{/if}}{{#if isAutoIncrement}},
+    generated: true as const{{/if}},
+  })
+  {{/if}}
+  {{#if ../features.swagger}}
+  {{#if nullable}}
+  @ApiPropertyOptional({ description: '{{comment}}' })
+  {{else}}
+  @ApiProperty({ description: '{{comment}}' })
+  {{/if}}
+  {{/if}}
+  {{propertyName name lang="typescript"}}: {{tsType}};
+  {{/if}}
+  {{/each}}
+
+  {{#if table.relationships.length}}
+  // 关联关系（Coder 自动推导）
+  {{#each table.relationships}}
+  {{#if (eq type "ManyToOne")}}
+  // {{type}}: {{../className}} → {{targetClassName}} (FK: {{#each columnNames}}{{this}}{{/each}})
+  @ManyToOne(() => {{targetClassName}}, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({{#each columnNames}}{ name: '{{this}}' }{{/each}})
+  {{targetPropertyName}}: {{targetClassName}};
+
+  {{/if}}
+  {{#if (eq type "OneToMany")}}
+  // {{type}}: {{../className}} ← {{targetClassName}}
+  @OneToMany(() => {{targetClassName}}, (item) => item.{{mappedBy}})
+  {{targetPropertyName}}List: {{targetClassName}}[];
+
+  {{/if}}
+  {{/each}}
+  {{/if}}
+}

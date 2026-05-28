@@ -1,0 +1,26 @@
+name: vue3-element
+language: typescript
+paradigm: lightweight
+fileExtension: .vue
+skeleton:
+  - template: skeleton/package.json.hbs
+    output: package.json
+  - template: skeleton/vite.config.ts.hbs
+    output: vite.config.ts
+  - template: skeleton/tsconfig.json.hbs
+    output: tsconfig.json
+  - template: skeleton/main.ts.hbs
+    output: src/main.ts
+  - template: skeleton/App.vue.hbs
+    output: src/App.vue
+  - template: skeleton/router.ts.hbs
+    output: src/router/index.ts
+  - template: skeleton/axios.ts.hbs
+    output: src/api/axios.ts
+entityTemplates:
+  - template: entity/api.ts.hbs
+    output: src/api/{{kebabCase tableName}}.ts
+  - template: entity/ListView.vue.hbs
+    output: src/views/{{kebabCase tableName}}/ListView.vue
+  - template: entity/FormView.vue.hbs
+    output: src/views/{{kebabCase tableName}}/FormView.vue

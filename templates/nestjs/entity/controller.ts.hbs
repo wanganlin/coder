@@ -1,0 +1,112 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  HttpCode,
+  HttpStatus,
+  ParseIntPipe,
+} from '@nestjs/common';
+{{#if features.swagger}}
+import { ApiTags, ApiOperation, ApiQuery, ApiResponse, ApiParam } from '@nestjs/swagger';
+{{/if}}
+import { {{className}}Service } from '../service/{{kebabCase tableName}}.service';
+import { Create{{className}}Dto, Update{{className}}Dto, {{className}}Response } from '../dto/{{kebabCase tableName}}.dto';
+
+{{#if features.swagger}}
+@ApiTags('{{className}}')
+{{/if}}
+@Controller('{{pluralize propertyName}}')
+export class {{className}}Controller {
+  constructor(private readonly service: {{className}}Service) {}
+
+  {{#if features.swagger}}
+  @ApiOperation({ summary: '获取 {{className}} 列表' })
+  {{#if features.pagination}}
+  @ApiQuery({ name: 'page', required: false, type: Number, description: '页码 (从0开始)' })
+  @ApiQuery({ name: 'size', required: false, type: Number, description: '每页条数' })
+  {{/if}}
+  @ApiResponse({ status: 200, description: '成功返回 {{className}} 列表' })
+  {{/if}}
+  @Get()
+  {{#if features.pagination}}
+  async findAll(
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
+    @Query('size', new ParseIntPipe({ optional: true })) size?: number,
+  ) {
+    return this.service.findAll(page ?? 0, size ?? 10);
+  }
+  {{else}}
+  async findAll() {
+    return this.service.findAll();
+  }
+  {{/if}}
+
+  {{#if features.swagger}}
+  @ApiOperation({ summary: '根据 ID 获取 {{className}}' })
+  {{#each columns}}{{#if isPrimaryKey}}
+  @ApiParam({ name: 'id', description: '{{../../className}} 主键' })
+  {{/if}}{{/each}}
+  @ApiResponse({ status: 200, description: '成功返回 {{className}}' })
+  @ApiResponse({ status: 404, description: '{{className}} 未找到' })
+  {{/if}}
+  @Get(':id')
+  async findById(
+    {{#each columns}}{{#if isPrimaryKey}}
+    @Param('id'{{#if (eq tsType "number")}}, ParseIntPipe{{/if}}) {{propertyName name lang="typescript"}}: {{tsType}},
+    {{/if}}{{/each}}
+  ) {
+    return this.service.findById({{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}{{/if}}{{/each}});
+  }
+
+  {{#if features.swagger}}
+  @ApiOperation({ summary: '创建 {{className}}' })
+  @ApiResponse({ status: 201, description: '{{className}} 创建成功' })
+  @ApiResponse({ status: 400, description: '请求参数校验失败' })
+  {{/if}}
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  async create(@Body() dto: Create{{className}}Dto) {
+    return this.service.create(dto);
+  }
+
+  {{#if features.swagger}}
+  @ApiOperation({ summary: '更新 {{className}}' })
+  {{#each columns}}{{#if isPrimaryKey}}
+  @ApiParam({ name: 'id', description: '{{../../className}} 主键' })
+  {{/if}}{{/each}}
+  @ApiResponse({ status: 200, description: '{{className}} 更新成功' })
+  @ApiResponse({ status: 404, description: '{{className}} 未找到' })
+  {{/if}}
+  @Patch(':id')
+  async update(
+    {{#each columns}}{{#if isPrimaryKey}}
+    @Param('id'{{#if (eq tsType "number")}}, ParseIntPipe{{/if}}) {{propertyName name lang="typescript"}}: {{tsType}},
+    {{/if}}{{/each}}
+    @Body() dto: Update{{className}}Dto,
+  ) {
+    return this.service.update({{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}, {{/if}}{{/each}}dto);
+  }
+
+  {{#if features.swagger}}
+  @ApiOperation({ summary: '删除 {{className}}' })
+  {{#each columns}}{{#if isPrimaryKey}}
+  @ApiParam({ name: 'id', description: '{{../../className}} 主键' })
+  {{/if}}{{/each}}
+  @ApiResponse({ status: 204, description: '{{className}} 删除成功' })
+  @ApiResponse({ status: 404, description: '{{className}} 未找到' })
+  {{/if}}
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async delete(
+    {{#each columns}}{{#if isPrimaryKey}}
+    @Param('id'{{#if (eq tsType "number")}}, ParseIntPipe{{/if}}) {{propertyName name lang="typescript"}}: {{tsType}},
+    {{/if}}{{/each}}
+  ) {
+    await this.service.delete({{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}{{/if}}{{/each}});
+  }
+}

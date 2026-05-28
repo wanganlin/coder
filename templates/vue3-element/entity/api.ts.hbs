@@ -1,0 +1,68 @@
+import request from './axios';
+
+export interface {{className}} {
+  {{#each columns}}
+  {{propertyName name lang="typescript"}}: {{#if (eq tsType "Date")}}string{{else}}{{tsType}}{{/if}};
+  {{/each}}
+}
+
+export interface {{className}}CreateParams {
+  {{#each columns}}
+  {{#unless isPrimaryKey}}
+  {{#unless isAutoIncrement}}
+  {{#if (and ../features.auditFields (isAuditField this))}}
+  // 审计字段由后端自动填充
+  {{else}}
+  {{propertyName name lang="typescript"}}{{#if nullable}}?{{/if}}: {{#if (eq tsType "Date")}}string{{else}}{{tsType}}{{/if}};
+  {{/if}}
+  {{/unless}}
+  {{/unless}}
+  {{/each}}
+}
+
+export type {{className}}UpdateParams = Partial<{{className}}CreateParams>;
+
+{{#if features.pagination}}
+export interface PageResult<T> {
+  content: T[];
+  totalElements: number;
+  page: number;
+  size: number;
+}
+{{/if}}
+
+const basePath = '/{{pluralize propertyName}}';
+
+export async function get{{className}}List(
+  {{#if features.pagination}}
+  page: number = 0,
+  size: number = 10,
+  {{/if}}
+): Promise<{{#if features.pagination}}PageResult<{{className}}>{{else}}{{className}}[]{{/if}}> {
+  return request.get(basePath, {
+    params: { {{#if features.pagination}}page, size{{/if}} },
+  });
+}
+
+export async function get{{className}}ById(
+  {{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}: {{#if (eq tsType "number")}}number{{else}}string{{/if}}{{/if}}{{/each}},
+): Promise<{{className}}> {
+  return request.get(`${basePath}/${ {{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}{{/if}}{{/each}} }`);
+}
+
+export async function create{{className}}(data: {{className}}CreateParams): Promise<{{className}}> {
+  return request.post(basePath, data);
+}
+
+export async function update{{className}}(
+  {{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}: {{#if (eq tsType "number")}}number{{else}}string{{/if}}, {{/if}}{{/each}}
+  data: {{className}}UpdateParams,
+): Promise<{{className}}> {
+  return request.patch(`${basePath}/${ {{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}{{/if}}{{/each}} }`, data);
+}
+
+export async function delete{{className}}(
+  {{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}: {{#if (eq tsType "number")}}number{{else}}string{{/if}}{{/if}}{{/each}},
+): Promise<void> {
+  return request.delete(`${basePath}/${ {{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}{{/if}}{{/each}} }`);
+}
