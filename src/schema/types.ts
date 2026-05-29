@@ -68,4 +68,16 @@ export interface TableSchema {
   foreignKeys: ForeignKeySchema[]; // 所有外键
   /** 推导出的表间关联关系（ManyToOne / OneToMany 等） */
   relationships?: RelationshipSchema[];
+  /** 标记为中间表（ManyToMany 的联结表），跳过实体生成 */
+  isJunctionTable?: boolean;
+  /** 表级扩展配置（_junction, _skipJunction 等） */
+  _tableExtensions?: Record<string, any>;
+}
+
+/** 显式声明的联结表配置 */
+export interface JunctionConfig {
+  leftTable: string;
+  rightTable: string;
+  leftColumn: string;
+  rightColumn: string;
 }

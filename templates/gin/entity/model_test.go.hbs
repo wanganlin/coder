@@ -1,0 +1,49 @@
+package model
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func Test{{className}}_TableName(t *testing.T) {
+	entity := &{{className}}{}
+	assert.Equal(t, "{{tableName}}", entity.TableName())
+}
+
+func Test{{className}}_Fields(t *testing.T) {
+	entity := &{{className}}{
+		{{#each columns}}
+		{{#unless (and ../features.auditFields (isAuditField this))}}
+		{{pascalCase name}}: {{#if (eq goType "string")}}"test-{{name}}"{{else if (eq goType "int64")}}1{{else if (eq goType "int")}}1{{else if (eq goType "bool")}}true{{else}}{{goType}}{}{{/if}},
+		{{/unless}}
+		{{/each}}
+	}
+
+	require.NotNil(t, entity)
+	{{#each columns}}
+	{{#unless (and ../features.auditFields (isAuditField this))}}
+	{{#if isPrimaryKey}}
+	assert.NotZero(t, entity.{{pascalCase name}})
+	{{/if}}
+	{{#if (eq goType "string")}}
+	assert.NotEmpty(t, entity.{{pascalCase name}})
+	{{/if}}
+	{{/unless}}
+	{{/each}}
+}
+
+func Test{{className}}_JSONSerialization(t *testing.T) {
+	entity := &{{className}}{
+		{{#each columns}}
+		{{#unless (and ../features.auditFields (isAuditField this))}}
+		{{#if (eq name "username")}}
+		{{pascalCase name}}: "json-test",
+		{{/if}}
+		{{/unless}}
+		{{/each}}
+	}
+
+	assert.NotNil(t, entity)
+}

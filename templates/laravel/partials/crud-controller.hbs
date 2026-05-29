@@ -1,0 +1,49 @@
+    /**
+     * 获取分页列表
+     */
+    public function index(Request $request)
+    {
+        $items = {{className}}::query()
+            ->when($request->query('sort'), fn($q) => $q->orderBy($request->query('sort'), $request->query('order', 'asc')))
+            ->paginate($request->query('size', 10));
+
+        return {{className}}Resource::collection($items);
+    }
+
+    /**
+     * 根据主键查询
+     */
+    public function show($id)
+    {
+        $item = {{className}}::findOrFail($id);
+        return new {{className}}Resource($item);
+    }
+
+    /**
+     * 创建
+     */
+    public function store(Store{{className}}Request $request)
+    {
+        $item = {{className}}::create($request->validated());
+        return new {{className}}Resource($item);
+    }
+
+    /**
+     * 更新
+     */
+    public function update(Update{{className}}Request $request, $id)
+    {
+        $item = {{className}}::findOrFail($id);
+        $item->update($request->validated());
+        return new {{className}}Resource($item);
+    }
+
+    /**
+     * 删除
+     */
+    public function destroy($id)
+    {
+        $item = {{className}}::findOrFail($id);
+        $item->delete();
+        return response()->json(null, 204);
+    }

@@ -1,0 +1,38 @@
+def get_{{snakeCase tableName}}_by_id(db: Session, {{snakeCase tableName}}_id: int) -> Optional[{{className}}]:
+    """根据主键查询 {{className}}"""
+    return db.query({{className}}).filter({{className}}.{{#each columns}}{{#if isPrimaryKey}}{{name}}{{/if}}{{/each}} == {{snakeCase tableName}}_id).first()
+
+
+def get_{{snakeCase (pluralize tableName)}}(db: Session, skip: int = 0, limit: int = 100) -> list[{{className}}]:
+    """分页查询 {{className}} 列表"""
+    return db.query({{className}}).offset(skip).limit(limit).all()
+
+
+def create_{{snakeCase tableName}}(db: Session, data: dict) -> {{className}}:
+    """创建 {{className}}"""
+    entity = {{className}}(**data)
+    db.add(entity)
+    db.commit()
+    db.refresh(entity)
+    return entity
+
+
+def update_{{snakeCase tableName}}(db: Session, {{snakeCase tableName}}_id: int, data: dict) -> Optional[{{className}}]:
+    """更新 {{className}}"""
+    entity = get_{{snakeCase tableName}}_by_id(db, {{snakeCase tableName}}_id)
+    if entity:
+        for key, value in data.items():
+            setattr(entity, key, value)
+        db.commit()
+        db.refresh(entity)
+    return entity
+
+
+def delete_{{snakeCase tableName}}(db: Session, {{snakeCase tableName}}_id: int) -> bool:
+    """删除 {{className}}"""
+    entity = get_{{snakeCase tableName}}_by_id(db, {{snakeCase tableName}}_id)
+    if entity:
+        db.delete(entity)
+        db.commit()
+        return True
+    return False

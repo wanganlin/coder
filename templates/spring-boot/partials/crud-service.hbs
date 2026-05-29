@@ -1,0 +1,18 @@
+
+    @Transactional(readOnly = true)
+    public Page<{{className}}> findAll(Pageable pageable) {
+        return repository.findAll(pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<{{className}}> findById({{#if primaryKey.length}}{{#each columns}}{{#if isPrimaryKey}}{{javaType}}{{/if}}{{/each}}{{else}}Long{{/if}} id) {
+        return repository.findById(id);
+    }
+
+    public {{className}} save({{className}} entity) {
+        return repository.save(entity);
+    }
+
+    public void deleteById({{#if primaryKey.length}}{{#each columns}}{{#if isPrimaryKey}}{{javaType}}{{/if}}{{/each}}{{else}}Long{{/if}} id) {
+        repository.deleteById(id);
+    }

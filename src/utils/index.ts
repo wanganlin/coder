@@ -1,3 +1,5 @@
+export * from './logger.js';
+
 /**
  * 通用工具函数模块
  *

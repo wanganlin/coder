@@ -1,0 +1,98 @@
+<?php
+
+namespace Tests\Unit\Models;
+
+use App\Models\{{className}};
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+/**
+ * {{className}} 模型单元测试
+ */
+class {{className}}Test extends TestCase
+{
+    use RefreshDatabase;
+
+    /**
+     * 测试模型可以创建实例
+     */
+    public function test_model_can_be_created(): void
+    {
+        $data = [
+            {{#each columns}}
+            {{#unless (and ../features.auditFields (isAuditField this))}}
+            {{#unless isPrimaryKey}}
+            {{#if (eq phpType "string")}}
+            '{{name}}' => 'test_{{name}}',
+            {{else if (eq phpType "int")}}
+            '{{name}}' => 1,
+            {{else if (eq phpType "bool")}}
+            '{{name}}' => true,
+            {{else if (eq phpType "float")}}
+            '{{name}}' => 1.0,
+            {{/if}}
+            {{/unless}}
+            {{/unless}}
+            {{/each}}
+        ];
+
+        $model = {{className}}::create($data);
+
+        $this->assertNotNull($model);
+        $this->assertDatabaseHas('{{tableName}}', [
+            {{#each columns}}
+            {{#unless (and ../features.auditFields (isAuditField this))}}
+            {{#unless isPrimaryKey}}
+            {{#if (eq phpType "string")}}
+            '{{name}}' => 'test_{{name}}',
+            {{/if}}
+            {{/unless}}
+            {{/unless}}
+            {{/each}}
+        ]);
+    }
+
+    /**
+     * 测试表名配置
+     */
+    public function test_table_name(): void
+    {
+        $model = new {{className}}();
+        $this->assertEquals('{{tableName}}', $model->getTable());
+    }
+
+    /**
+     * 测试可填充字段
+     */
+    public function test_fillable_fields(): void
+    {
+        $model = new {{className}}();
+        $fillable = $model->getFillable();
+
+        {{#each columns}}
+        {{#unless (or isPrimaryKey (and ../features.auditFields (isAuditField this)))}}
+        $this->assertContains('{{name}}', $fillable);
+        {{/unless}}
+        {{/each}}
+    }
+
+    /**
+     * 测试字段类型转换
+     */
+    public function test_casts(): void
+    {
+        $model = new {{className}}();
+        $casts = $model->getCasts();
+
+        {{#each columns}}
+        {{#if (eq phpType "bool")}}
+        $this->assertArrayHasKey('{{name}}', $casts);
+        $this->assertEquals('boolean', $casts['{{name}}']);
+        {{/if}}
+        {{#if (eq phpType "int")}}
+        $this->assertArrayHasKey('{{name}}', $casts);
+        $this->assertEquals('integer', $casts['{{name}}']);
+        {{/if}}
+        {{/each}}
+    }
+}

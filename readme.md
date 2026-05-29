@@ -105,7 +105,7 @@ templates/
 ### 安装
 
 ```bash
-npm install -g @coder/cli
+npm install -g @juling/coder
 ```
 
 ### 基本用法

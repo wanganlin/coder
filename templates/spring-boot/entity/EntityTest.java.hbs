@@ -1,0 +1,97 @@
+package {{package}}.entity;
+
+import {{package}}.repository.{{className}}Repository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class {{className}}Test {
+
+    @Mock
+    private {{className}}Repository repository;
+
+    @InjectMocks
+    private {{className}}Service service;
+
+    private {{className}} entity;
+
+    @BeforeEach
+    void setUp() {
+        entity = {{className}}.builder()
+            {{#each columns}}
+            {{#unless (and ../features.auditFields (isAuditField this))}}
+            {{#if isPrimaryKey}}
+            .{{propertyName name}}({{#if (eq javaType "Long")}}1L{{else if (eq javaType "Integer")}}1{{else if (eq javaType "String")}}"test-{{name}}"{{else}}null{{/if}})
+            {{else}}
+            {{#if (eq javaType "String")}}
+            .{{propertyName name}}("test-{{name}}")
+            {{else if (eq javaType "Long")}}
+            .{{propertyName name}}(1L)
+            {{else if (eq javaType "Integer")}}
+            .{{propertyName name}}(1)
+            {{else if (eq javaType "Boolean")}}
+            .{{propertyName name}}(true)
+            {{/if}}
+            {{/if}}
+            {{/unless}}
+            {{/each}}
+            .build();
+    }
+
+    {{#if features.pagination}}
+    @Test
+    void shouldFindAllWithPagination() {
+        var pageable = PageRequest.of(0, 10);
+        var page = new PageImpl<>(List.of(entity), pageable, 1);
+
+        when(repository.findAll(any(PageRequest.class))).thenReturn(page);
+
+        Page<{{className}}> result = service.findAll(pageable);
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(1);
+        verify(repository).findAll(pageable);
+    }
+    {{/if}}
+
+    @Test
+    void shouldFindById() {
+        {{#each columns}}{{#if isPrimaryKey}}var id = entity.get{{pascalCase name}}();{{/if}}{{/each}}
+        when(repository.findById(any())).thenReturn(Optional.of(entity));
+
+        Optional<{{className}}> result = service.findById(id);
+        assertThat(result).isPresent();
+        assertThat(result.get()).isEqualTo(entity);
+    }
+
+    @Test
+    void shouldCreateEntity() {
+        when(repository.save(any({{className}}.class))).thenReturn(entity);
+
+        {{className}} result = service.save(entity);
+        assertThat(result).isNotNull();
+        verify(repository).save(entity);
+    }
+
+    @Test
+    void shouldDeleteById() {
+        {{#each columns}}{{#if isPrimaryKey}}var id = entity.get{{pascalCase name}}();{{/if}}{{/each}}
+        doNothing().when(repository).deleteById(any());
+
+        service.deleteById(id);
+        verify(repository).deleteById(id);
+    }
+}

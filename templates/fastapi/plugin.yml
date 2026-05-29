@@ -18,3 +18,6 @@ entityTemplates:
     output: crud/{{snakeCase tableName}}.py
   - template: entity/router.py.hbs
     output: routers/{{snakeCase tableName}}.py
+  - template: entity/test_model.py.hbs
+    output: tests/test_{{snakeCase tableName}}.py
+    test: true

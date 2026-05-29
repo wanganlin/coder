@@ -8,6 +8,7 @@ import { TemplateEngine } from '../engine/index.js';
 import { writeFiles } from '../output/index.js';
 import { formatFiles } from '../codegen/format.js';
 import { verifyFiles } from '../codegen/verify.js';
+import { logger } from '../utils/logger.js';
 
 export interface GenerationSummary {
   tablesProcessed: string[];
@@ -61,7 +62,7 @@ export async function runGeneration(
       tablesProcessed.push(name);
     }
 
-    // 4.5 推导表间关联关系（外键 → ManyToOne / OneToMany）
+    // 4.5 推导表间关联关系（外键 → ManyToOne / OneToMany / ManyToMany / OneToOne）
     deriveRelationships(decoratedSchemas);
 
     // 5. 初始化模板引擎并加载后端插件
@@ -72,9 +73,13 @@ export async function runGeneration(
     // 6. 渲染后端骨架层
     const skeletonFiles = engine.renderSkeleton(config, decoratedSchemas);
 
-    // 7. 渲染后端实体层
+    // 7. 渲染后端实体层（跳过中间表）
     const entityFiles = [];
     for (const schema of decoratedSchemas) {
+      if (schema.isJunctionTable) {
+        logger.info(`[schema] 跳过中间表 ${schema.name}（不生成实体）`);
+        continue;
+      }
       const files = engine.renderEntity(schema, config);
       entityFiles.push(...files);
     }
@@ -87,7 +92,7 @@ export async function runGeneration(
 
     // ==== 前端生成（可选） ====
     if (config.target.frontend) {
-      console.log(`\n[frontend] 开始生成 ${config.target.frontend} 前端代码...`);
+      logger.info(`\n[frontend] 开始生成 ${config.target.frontend} 前端代码...`);
       const frontendEngine = new TemplateEngine();
       const frontendPluginDir = resolvePluginDir(config.target.frontend);
       frontendEngine.loadPlugin(frontendPluginDir);
@@ -107,19 +112,19 @@ export async function runGeneration(
 
     // ==== 代码格式化 ====
     if (config.features.format) {
-      console.log('\n[format] 开始代码格式化...');
+      logger.info('\n[format] 开始代码格式化...');
       const formatResult = formatFiles(outputDir, [...skeletonFiles, ...entityFiles]);
       if (formatResult.formatted > 0) {
-        console.log(`[format] 完成: ${formatResult.formatted} 文件已格式化`);
+        logger.info(`[format] 完成: ${formatResult.formatted} 文件已格式化`);
       }
     }
 
     // ==== 编译验证 ====
     if (config.features.verify) {
-      console.log('\n[verify] 开始编译验证...');
+      logger.info('\n[verify] 开始编译验证...');
       const verifyResult = verifyFiles(outputDir, [...skeletonFiles, ...entityFiles]);
       if (verifyResult.errors.length === 0 && verifyResult.total > 0) {
-        console.log('[verify] 编译验证完成，未发现错误');
+        logger.info('[verify] 编译验证完成，未发现错误');
       }
     }
   } finally {

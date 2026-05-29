@@ -5,7 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * {{tableComment}}
@@ -81,6 +83,16 @@ class {{className}} extends Model
     }
 
 {{/if}}
+{{#if (eq type "OneToOne")}}
+    /**
+     * {{type}}: {{../className}} → {{targetClassName}}
+     */
+    public function {{targetPropertyName}}(): HasOne
+    {
+        return $this->hasOne({{targetClassName}}::class, '{{#each targetColumns}}{{this}}{{/each}}', '{{#each columnNames}}{{this}}{{/each}}');
+    }
+
+{{/if}}
 {{#if (eq type "OneToMany")}}
     /**
      * {{type}}: {{../className}} ← {{targetClassName}}
@@ -88,6 +100,16 @@ class {{className}} extends Model
     public function {{targetPropertyName}}List(): HasMany
     {
         return $this->hasMany({{targetClassName}}::class, '{{#each targetColumns}}{{this}}{{/each}}', '{{#each ../primaryKey}}{{this}}{{/each}}');
+    }
+
+{{/if}}
+{{#if (eq type "ManyToMany")}}
+    /**
+     * {{type}}: {{../className}} ↔ {{targetClassName}} (联结表: {{mappedBy}})
+     */
+    public function {{pluralize targetPropertyName}}(): BelongsToMany
+    {
+        return $this->belongsToMany({{targetClassName}}::class, '{{mappedBy}}', '{{#each columnNames}}{{this}}{{/each}}', '{{#each targetColumns}}{{this}}{{/each}}');
     }
 
 {{/if}}

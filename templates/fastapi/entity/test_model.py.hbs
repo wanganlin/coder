@@ -1,0 +1,65 @@
+"""{{className}} Model 单元测试"""
+
+import pytest
+from {{snakeCase tableName}}_model import {{className}}
+
+
+class Test{{className}}:
+    """{{className}} 模型测试"""
+
+    def test_create_{{snakeCase tableName}}(self):
+        """测试创建 {{className}} 实例"""
+        entity = {{className}}(
+            {{#each columns}}
+            {{#unless (and ../features.auditFields (isAuditField this))}}
+            {{#if (eq pythonType "str")}}
+            {{name}}="test_{{name}}",
+            {{else if (eq pythonType "int")}}
+            {{name}}=1,
+            {{else if (eq pythonType "bool")}}
+            {{name}}=True,
+            {{else if (eq pythonType "float")}}
+            {{name}}=1.0,
+            {{/if}}
+            {{/unless}}
+            {{/each}}
+        )
+        assert entity is not None
+        {{#each columns}}
+        {{#if isPrimaryKey}}
+        assert hasattr(entity, "{{name}}")
+        {{/if}}
+        {{/each}}
+
+    def test_table_name(self):
+        """测试表名配置"""
+        assert {{className}}.__tablename__ == "{{tableName}}"
+
+    {{#each columns}}
+    {{#if (eq pythonType "str")}}
+    def test_{{name}}_nullable(self):
+        """测试 {{name}} 字段可空性"""
+        kwargs = {
+            {{#each ../columns}}
+            {{#unless (and ../../features.auditFields (isAuditField this))}}
+            {{#unless (eq name ../name)}}
+            {{#if (eq pythonType "str")}}
+            "{{name}}": "test_value",
+            {{else if (eq pythonType "int")}}
+            "{{name}}": 1,
+            {{else if (eq pythonType "bool")}}
+            "{{name}}": True,
+            {{/if}}
+            {{/unless}}
+            {{/unless}}
+            {{/each}}
+        }
+        {{#if nullable}}
+        entity = {{../className}}({name}=None, **kwargs)
+        assert entity.{{name}} is None
+        {{else}}
+        with pytest.raises(Exception):
+            {{../className}}({name}=None, **kwargs)
+        {{/if}}
+    {{/if}}
+    {{/each}}

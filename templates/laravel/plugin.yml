@@ -22,3 +22,6 @@ entityTemplates:
     output: app/Http/Resources/{{className}}Resource.php
   - template: entity/Controller.php.hbs
     output: app/Http/Controllers/Api/{{className}}Controller.php
+  - template: entity/ModelTest.php.hbs
+    output: tests/Unit/Models/{{className}}Test.php
+    test: true

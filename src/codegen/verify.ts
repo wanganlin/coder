@@ -1,6 +1,16 @@
 import { execSync } from 'node:child_process';
-import { resolve, dirname } from 'node:path';
+import { resolve, dirname, extname } from 'node:path';
 import type { FileOutput } from '../engine/index.js';
+import { logger } from '../utils/logger.js';
+
+/** 各语言源码文件扩展名白名单，非源码文件不传给验证工具 */
+const SOURCE_EXTENSIONS: Record<string, string[]> = {
+  java: ['.java'],
+  go: ['.go'],
+  python: ['.py'],
+  php: ['.php'],
+  typescript: ['.ts', '.tsx'],
+};
 
 /**
  * 验证结果
@@ -81,11 +91,13 @@ export function verifyFiles(
   const warnings: string[] = [];
   let total = 0;
 
-  // 按语言分组
+  // 按语言分组（仅包含源码文件）
   const groups = new Map<string, string[]>();
   for (const file of files) {
     const lang = file.language || 'java';
     if (!VERIFIERS[lang]) continue;
+    const allowedExts = SOURCE_EXTENSIONS[lang];
+    if (allowedExts && !allowedExts.includes(extname(file.outputPath))) continue;
     if (!groups.has(lang)) {
       groups.set(lang, []);
     }
@@ -108,7 +120,7 @@ export function verifyFiles(
       const cmd = verifier.command(filePaths, outputDir);
       total += filePaths.length;
       execSync(cmd, { stdio: 'pipe', timeout: 60000, cwd: outputDir });
-      console.log(`[verify] ${verifier.tool}: ${filePaths.length} 文件验证通过`);
+      logger.info(`[verify] ${verifier.tool}: ${filePaths.length} 文件验证通过`);
     } catch (err: any) {
       const msg = err.stderr?.toString() || err.stdout?.toString() || err.message || '';
       // 截取前 500 字符避免输出过长
@@ -120,18 +132,18 @@ export function verifyFiles(
 
   // 打印验证摘要
   if (errors.length > 0) {
-    console.warn('\n=== 编译验证错误 ===');
-    errors.forEach((e) => console.warn(e));
-    console.warn(`\n发现 ${errors.length} 个语言的验证错误，请检查生成代码。`);
+    logger.warn('\n=== 编译验证错误 ===');
+    errors.forEach((e) => logger.warn(e));
+    logger.warn(`\n发现 ${errors.length} 个语言的验证错误，请检查生成代码。`);
   }
 
   if (warnings.length > 0) {
-    console.warn('\n=== 验证警告 ===');
-    warnings.forEach((w) => console.warn(`  ⚠ ${w}`));
+    logger.warn('\n=== 验证警告 ===');
+    warnings.forEach((w) => logger.warn(`  ⚠ ${w}`));
   }
 
   if (total > 0 && errors.length === 0 && warnings.length === 0) {
-    console.log(`\n[verify] 所有 ${total} 个文件验证通过`);
+    logger.info(`\n[verify] 所有 ${total} 个文件验证通过`);
   }
 
   return { errors, warnings, total };

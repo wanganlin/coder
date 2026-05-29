@@ -12,7 +12,14 @@ export const FieldExtensionSchema = z
   })
   .catchall(z.any());
 
-export type FieldExtension = z.infer<typeof FieldExtensionSchema>;
+export interface FieldExtension {
+  enum?: string[];
+  frontendWidget?: 'input' | 'select' | 'datepicker' | 'switch' | 'textarea' | 'radio' | 'checkbox';
+  desensitize?: 'phone' | 'email' | 'idcard' | 'bankcard' | 'name';
+  label?: string;
+  comment?: string;
+  [key: string]: any;
+}
 
 export const DatasourceConfigSchema = z.object({
   type: z.enum(['mysql', 'postgresql', 'ddl']),

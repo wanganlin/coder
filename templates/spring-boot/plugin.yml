@@ -22,3 +22,6 @@ entityTemplates:
     output: src/main/java/{{packagePath}}/controller/{{className}}Controller.java
   - template: entity/DTO.java.hbs
     output: src/main/java/{{packagePath}}/dto/{{className}}DTO.java
+  - template: entity/EntityTest.java.hbs
+    output: src/test/java/{{packagePath}}/entity/{{className}}Test.java
+    test: true

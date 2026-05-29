@@ -14,7 +14,7 @@ describe('NestJS 11 + TypeORM 0.3 Templates Integration (T9)', () => {
     expect(metadata.name).toBe('nestjs');
     expect(metadata.language).toBe('typescript');
     expect(metadata.skeleton?.length).toBe(6);
-    expect(metadata.entityTemplates?.length).toBe(5);
+    expect(metadata.entityTemplates?.length).toBe(6);
   });
 
   it('should render nestjs skeleton files', () => {
@@ -136,7 +136,7 @@ describe('NestJS 11 + TypeORM 0.3 Templates Integration (T9)', () => {
     };
 
     const outputs = engine.renderEntity(table, config);
-    expect(outputs.length).toBe(5);
+    expect(outputs.length).toBe(6);
 
     // Entity checks
     const entityFile = outputs.find((o) => o.outputPath.includes('.entity.ts'))!;

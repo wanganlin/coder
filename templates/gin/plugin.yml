@@ -18,3 +18,6 @@ entityTemplates:
     output: model/{{snakeCase tableName}}_dto.go
   - template: entity/handler.go.hbs
     output: handler/{{snakeCase tableName}}.go
+  - template: entity/model_test.go.hbs
+    output: model/{{snakeCase tableName}}_test.go
+    test: true

@@ -14,7 +14,7 @@ describe('PHP (Laravel 13 + Eloquent ORM) Templates Integration (T10)', () => {
     expect(metadata.name).toBe('laravel');
     expect(metadata.language).toBe('php');
     expect(metadata.skeleton?.length).toBe(4);
-    expect(metadata.entityTemplates?.length).toBe(5);
+    expect(metadata.entityTemplates?.length).toBe(6);
   });
 
   it('should render laravel skeleton files', () => {
@@ -143,7 +143,7 @@ describe('PHP (Laravel 13 + Eloquent ORM) Templates Integration (T10)', () => {
     };
 
     const outputs = engine.renderEntity(table, config);
-    expect(outputs.length).toBe(5);
+    expect(outputs.length).toBe(6);
 
     const modelFile = outputs.find((o) => o.outputPath === 'app/Models/SysUser.php')!;
     expect(modelFile).toBeDefined();

@@ -75,6 +75,15 @@ export function processTableSchema(
   // 收集主键列名
   const primaryKey = processedColumns.filter((col) => col.isPrimaryKey).map((col) => col.name);
 
+  // 提取表级扩展（_junction, _skipJunction 等 _ 前缀的 key）
+  const tableExtensions = extensions?.[tableName] || {};
+  const tableLevelExt: Record<string, any> = {};
+  for (const [k, v] of Object.entries(tableExtensions)) {
+    if (k.startsWith('_')) {
+      tableLevelExt[k] = v;
+    }
+  }
+
   return {
     name: tableName,
     className: toClassName(tableName),
@@ -84,15 +93,50 @@ export function processTableSchema(
     indexes: rawTable.indexes || [],
     foreignKeys: rawTable.foreignKeys || [],
     relationships: [],
+    _tableExtensions: Object.keys(tableLevelExt).length > 0 ? tableLevelExt : undefined,
+    isJunctionTable: false,
   };
+}
+
+/**
+ * 检查列名列表中的所有列是否都在该表的某个唯一索引中
+ */
+function isUniqueIndexColumns(schema: TableSchema, columnNames: string[]): boolean {
+  const columnSet = new Set(columnNames);
+  const uniqueIndexes = (schema.indexes || []).filter((idx) => idx.unique);
+  return uniqueIndexes.some((idx) => {
+    const idxSet = new Set(idx.columns);
+    return columnSet.isSubsetOf(idxSet);
+  });
+}
+
+/**
+ * 判断表是否为候选中间表（ManyToMany 联结表）
+ * 条件：恰好 2 个 FK、所有非 PK 列都是 FK 列（无额外业务字段）
+ */
+function isCandidateJunction(schema: TableSchema): boolean {
+  if (schema.foreignKeys.length !== 2) return false;
+  const fkColumns = new Set(schema.foreignKeys.flatMap((fk) => fk.columnNames));
+  const pkSet = new Set(schema.primaryKey);
+  // 所有非主键列都应该是外键列
+  for (const col of schema.columns) {
+    if (pkSet.has(col.name)) continue;
+    if (!fkColumns.has(col.name)) return false;
+  }
+  return true;
 }
 
 /**
  * 从所有表的 Schema 中自动推导关联关系
  *
  * 遍历所有外键，为每张表生成：
- * - @ManyToOne（当前表持有外键 → 关联目标表）
- * - @OneToMany（其他表持有指向当前表的外键 → 反向关联）
+ * - ManyToOne / OneToOne（当前表持有外键 → 关联目标表）
+ * - OneToMany（其他表持有指向当前表的外键 → 反向关联）
+ * - ManyToMany（通过中间表联结两端表）
+ *
+ * 支持通过 extensions 配置覆盖：
+ *   _junction: { leftTable, rightTable, leftColumn, rightColumn } 显式声明中间表
+ *   _skipJunction: true  排除误判的中间表
  *
  * @param schemas 所有已处理的 TableSchema 列表（会被原地修改）
  */
@@ -102,14 +146,62 @@ export function deriveRelationships(schemas: TableSchema[]): void {
     schemaMap.set(schema.name, schema);
   }
 
+  // 收集显式声明的联结表配置
+  const explicitJunctions = new Map<string, { left: string; right: string; leftCol: string; rightCol: string }>();
+  const skipJunctions = new Set<string>();
+
+  for (const schema of schemas) {
+    const ext = schema._tableExtensions;
+    if (!ext) continue;
+    if (ext._skipJunction) {
+      skipJunctions.add(schema.name);
+    }
+    if (ext._junction) {
+      const j = ext._junction;
+      explicitJunctions.set(schema.name, {
+        left: j.leftTable || j.leftTable,
+        right: j.rightTable || j.rightTable,
+        leftCol: j.leftColumn || j.leftColumn,
+        rightCol: j.rightColumn || j.rightColumn,
+      });
+    }
+  }
+
+  // 检测 ManyToMany 联结表
+  // 优先使用显式配置，其次使用自动检测
+  const junctionTables = new Map<
+    string,
+    { left: string; right: string; leftCol: string; rightCol: string }
+  >();
+
+  for (const schema of schemas) {
+    if (skipJunctions.has(schema.name)) continue;
+
+    if (explicitJunctions.has(schema.name)) {
+      junctionTables.set(schema.name, explicitJunctions.get(schema.name)!);
+      schema.isJunctionTable = true;
+    } else if (isCandidateJunction(schema)) {
+      const fks = schema.foreignKeys;
+      junctionTables.set(schema.name, {
+        left: fks[0].referencedTableName,
+        right: fks[1].referencedTableName,
+        leftCol: fks[0].columnNames[0],
+        rightCol: fks[1].columnNames[0],
+      });
+      schema.isJunctionTable = true;
+    }
+  }
+
   for (const schema of schemas) {
     const relationships: RelationshipSchema[] = [];
 
-    // 1. ManyToOne：当前表的外键 → 关联目标表
+    // 1. ManyToOne / OneToOne：当前表的外键 → 关联目标表
     for (const fk of schema.foreignKeys) {
       const target = schemaMap.get(fk.referencedTableName);
+      const isUnique = isUniqueIndexColumns(schema, fk.columnNames);
+
       relationships.push({
-        type: 'ManyToOne',
+        type: isUnique ? 'OneToOne' : 'ManyToOne',
         columnNames: fk.columnNames,
         targetTable: fk.referencedTableName,
         targetColumns: fk.referencedColumnNames,
@@ -123,11 +215,10 @@ export function deriveRelationships(schemas: TableSchema[]): void {
       if (other.name === schema.name) continue;
       for (const fk of other.foreignKeys) {
         if (fk.referencedTableName === schema.name) {
-          // 找到引用当前表的列名作为 mappedBy
-          const mappedByCol =
-            other.columns.find(
-              (c) => c.name === fk.columnNames[0] && !c.isPrimaryKey,
-            )?.propertyName || other.columns[0]?.propertyName || '';
+          const otherFkCol = other.columns.find(
+            (c) => c.name === fk.columnNames[0] && !c.isPrimaryKey,
+          );
+          const mappedByCol = otherFkCol?.propertyName || other.columns[0]?.propertyName || '';
 
           relationships.push({
             type: 'OneToMany',
@@ -139,6 +230,33 @@ export function deriveRelationships(schemas: TableSchema[]): void {
             mappedBy: mappedByCol,
           });
         }
+      }
+    }
+
+    // 3. ManyToMany：通过联结表关联
+    for (const [junctionName, jConfig] of junctionTables) {
+      if (jConfig.left === schema.name) {
+        const rightSchema = schemaMap.get(jConfig.right);
+        relationships.push({
+          type: 'ManyToMany',
+          columnNames: [jConfig.leftCol],
+          targetTable: jConfig.right,
+          targetColumns: [jConfig.rightCol],
+          targetClassName: rightSchema ? toClassName(rightSchema.name) : toClassName(jConfig.right),
+          targetPropertyName: toPropertyName(jConfig.right, 'java'),
+          mappedBy: junctionName,
+        });
+      } else if (jConfig.right === schema.name) {
+        const leftSchema = schemaMap.get(jConfig.left);
+        relationships.push({
+          type: 'ManyToMany',
+          columnNames: [jConfig.rightCol],
+          targetTable: jConfig.left,
+          targetColumns: [jConfig.leftCol],
+          targetClassName: leftSchema ? toClassName(leftSchema.name) : toClassName(jConfig.left),
+          targetPropertyName: toPropertyName(jConfig.left, 'java'),
+          mappedBy: junctionName,
+        });
       }
     }
 

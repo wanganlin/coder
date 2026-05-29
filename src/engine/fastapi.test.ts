@@ -14,7 +14,7 @@ describe('Python (FastAPI 0.136 + SQLAlchemy 2.x + Pydantic v2) Templates Integr
     expect(metadata.name).toBe('fastapi');
     expect(metadata.language).toBe('python');
     expect(metadata.skeleton?.length).toBe(3);
-    expect(metadata.entityTemplates?.length).toBe(4);
+    expect(metadata.entityTemplates?.length).toBe(5);
   });
 
   it('should render fastapi skeleton files', () => {
@@ -137,7 +137,7 @@ describe('Python (FastAPI 0.136 + SQLAlchemy 2.x + Pydantic v2) Templates Integr
     };
 
     const outputs = engine.renderEntity(table, config);
-    expect(outputs.length).toBe(4);
+    expect(outputs.length).toBe(5);
 
     const modelFile = outputs.find((o) => o.outputPath === 'models/sys_user.py')!;
     expect(modelFile).toBeDefined();

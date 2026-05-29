@@ -26,3 +26,6 @@ entityTemplates:
     output: src/controller/{{kebabCase tableName}}.controller.ts
   - template: entity/module.ts.hbs
     output: src/module/{{kebabCase tableName}}.module.ts
+  - template: entity/entity.spec.ts.hbs
+    output: src/entity/{{kebabCase tableName}}.entity.spec.ts
+    test: true

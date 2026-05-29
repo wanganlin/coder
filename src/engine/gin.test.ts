@@ -14,7 +14,7 @@ describe('Go (Gin 1.12 + GORM 2.x) Templates Integration (T8)', () => {
     expect(metadata.name).toBe('gin');
     expect(metadata.language).toBe('go');
     expect(metadata.skeleton?.length).toBe(4);
-    expect(metadata.entityTemplates?.length).toBe(3);
+    expect(metadata.entityTemplates?.length).toBe(4);
   });
 
   it('should render gin skeleton files', () => {
@@ -126,7 +126,7 @@ describe('Go (Gin 1.12 + GORM 2.x) Templates Integration (T8)', () => {
     };
 
     const outputs = engine.renderEntity(table, config);
-    expect(outputs.length).toBe(3);
+    expect(outputs.length).toBe(4);
 
     const modelFile = outputs.find((o) => o.outputPath === 'model/sys_user.go')!;
     expect(modelFile).toBeDefined();

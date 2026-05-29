@@ -11,8 +11,11 @@ import {
   Column,
   {{#if table.relationships.length}}
   ManyToOne,
+  OneToOne,
   OneToMany,
+  ManyToMany,
   JoinColumn,
+  JoinTable,
   {{/if}}
   CreateDateColumn,
   UpdateDateColumn,
@@ -62,10 +65,28 @@ export class {{className}} {{#if features.auditFields}}extends BaseEntity{{/if}}
   {{targetPropertyName}}: {{targetClassName}};
 
   {{/if}}
+  {{#if (eq type "OneToOne")}}
+  // {{type}}: {{../className}} → {{targetClassName}}
+  @OneToOne(() => {{targetClassName}}, { nullable: true, onDelete: 'CASCADE' })
+  @JoinColumn({{#each columnNames}}{ name: '{{this}}' }{{/each}})
+  {{targetPropertyName}}: {{targetClassName}};
+
+  {{/if}}
   {{#if (eq type "OneToMany")}}
   // {{type}}: {{../className}} ← {{targetClassName}}
   @OneToMany(() => {{targetClassName}}, (item) => item.{{mappedBy}})
   {{targetPropertyName}}List: {{targetClassName}}[];
+
+  {{/if}}
+  {{#if (eq type "ManyToMany")}}
+  // {{type}}: {{../className}} ↔ {{targetClassName}} (联结表: {{mappedBy}})
+  @ManyToMany(() => {{targetClassName}})
+  @JoinTable({
+    name: '{{mappedBy}}',
+    joinColumn: { name: '{{#each columnNames}}{{this}}{{/each}}' },
+    inverseJoinColumn: { name: '{{#each targetColumns}}{{this}}{{/each}}' },
+  })
+  {{pluralize targetPropertyName}}: {{targetClassName}}[];
 
   {{/if}}
   {{/each}}

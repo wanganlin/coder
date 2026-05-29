@@ -21,9 +21,17 @@ type {{className}} struct {
 	// {{type}}: {{../className}} → {{targetClassName}} (FK: {{#each columnNames}}{{this}}{{/each}})
 	{{targetClassName}} {{targetClassName}} `gorm:"foreignKey:{{#each columnNames}}{{pascalCase this}}{{/each}};references:{{#each targetColumns}}{{pascalCase this}}{{/each}}" json:"{{targetPropertyName}}"`
 	{{/if}}
+	{{#if (eq type "OneToOne")}}
+	// {{type}}: {{../className}} → {{targetClassName}}
+	{{targetClassName}} {{targetClassName}} `gorm:"foreignKey:{{#each columnNames}}{{pascalCase this}}{{/each}};references:{{#each targetColumns}}{{pascalCase this}}{{/each}};constraint:OnDelete:CASCADE" json:"{{targetPropertyName}}"`
+	{{/if}}
 	{{#if (eq type "OneToMany")}}
 	// {{type}}: {{../className}} ← {{targetClassName}} (mappedBy: {{mappedBy}})
 	{{targetPropertyName}}List []{{targetClassName}} `gorm:"foreignKey:{{mappedBy}}" json:"{{targetPropertyName}}List"`
+	{{/if}}
+	{{#if (eq type "ManyToMany")}}
+	// {{type}}: {{../className}} ↔ {{targetClassName}} (联结表: {{mappedBy}})
+	{{pluralize targetPropertyName}} []{{targetClassName}} `gorm:"many2many:{{mappedBy}}" json:"{{pluralize targetPropertyName}}"`
 	{{/if}}
 	{{/each}}
 	{{/if}}

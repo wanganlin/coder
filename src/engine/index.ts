@@ -113,6 +113,9 @@ export class TemplateEngine {
     const context = this.buildContext(config, table);
 
     for (const item of metadata.entityTemplates) {
+      // 跳过测试模板 (当 features.unitTest 为 false 时)
+      if (item.test && !config.features.unitTest) continue;
+
       const templatePath = resolve(this.pluginDir, item.template);
       if (!existsSync(templatePath)) {
         throw new Error(`实体层模板文件未找到: ${templatePath}`);

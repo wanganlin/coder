@@ -1,0 +1,53 @@
+  /**
+   * 分页查询列表
+   */
+  async findAll(
+    @Query('page') page: number = 1,
+    @Query('size') size: number = 10,
+  ): Promise<{ items: {{className}}[]; total: number }> {
+    const [items, total] = await this.{{camelCase className}}Repository.findAndCount({
+      skip: (page - 1) * size,
+      take: size,
+      order: { {{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}: 'DESC' as const{{/if}}{{/each}} },
+    });
+    return { items, total };
+  }
+
+  /**
+   * 根据主键查询
+   */
+  async findById({{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}: {{tsType}}{{#unless @last}}, {{/unless}}{{/if}}{{/each}}): Promise<{{className}}> {
+    const entity = await this.{{camelCase className}}Repository.findOne({
+      where: { {{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}{{/if}}{{/each}} },
+    });
+    if (!entity) {
+      throw new NotFoundException(`{{className}} not found`);
+    }
+    return entity;
+  }
+
+  /**
+   * 创建
+   */
+  async create(dto: Create{{className}}Dto): Promise<{{className}}> {
+    const entity = this.{{camelCase className}}Repository.create(dto);
+    return this.{{camelCase className}}Repository.save(entity);
+  }
+
+  /**
+   * 更新
+   */
+  async update({{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}: {{tsType}}, {{/if}}{{/each}}dto: Update{{className}}Dto): Promise<{{className}}> {
+    await this.{{camelCase className}}Repository.update({{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}{{/if}}{{/each}}, dto);
+    return this.findById({{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}{{/if}}{{/each}});
+  }
+
+  /**
+   * 删除
+   */
+  async delete({{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}: {{tsType}}{{/if}}{{/each}}): Promise<void> {
+    const result = await this.{{camelCase className}}Repository.delete({{#each columns}}{{#if isPrimaryKey}}{{propertyName name lang="typescript"}}{{/if}}{{/each}});
+    if (result.affected === 0) {
+      throw new NotFoundException(`{{className}} not found`);
+    }
+  }

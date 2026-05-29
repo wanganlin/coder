@@ -69,10 +69,28 @@ public class {{className}} {{#if features.auditFields}}extends BaseEntity{{/if}}
     private {{targetClassName}} {{targetPropertyName}};
 
     {{/if}}
+    {{#if (eq type "OneToOne")}}
+    // {{type}}: {{../className}} → {{targetClassName}}
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn({{#each columnNames}}name = "{{this}}"{{#unless @last}}, {{/unless}}{{/each}})
+    private {{targetClassName}} {{targetPropertyName}};
+
+    {{/if}}
     {{#if (eq type "OneToMany")}}
     // {{type}}: {{../className}} ← {{targetClassName}}
     @OneToMany(mappedBy = "{{mappedBy}}", fetch = FetchType.LAZY)
     private List<{{targetClassName}}> {{targetPropertyName}}List;
+
+    {{/if}}
+    {{#if (eq type "ManyToMany")}}
+    // {{type}}: {{../className}} ↔ {{targetClassName}} (联结表: {{mappedBy}})
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "{{mappedBy}}",
+        joinColumns = @JoinColumn(name = "{{#each columnNames}}{{this}}{{/each}}"),
+        inverseJoinColumns = @JoinColumn(name = "{{#each targetColumns}}{{this}}{{/each}}")
+    )
+    private List<{{targetClassName}}> {{pluralize targetPropertyName}};
 
     {{/if}}
     {{/each}}

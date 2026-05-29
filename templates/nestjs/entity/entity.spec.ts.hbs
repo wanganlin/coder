@@ -1,0 +1,112 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { {{className}} } from './{{kebabCase tableName}}.entity';
+import { {{className}}Service } from '../service/{{kebabCase tableName}}.service';
+import { Create{{className}}Dto, Update{{className}}Dto } from '../dto/{{kebabCase tableName}}.dto';
+
+describe('{{className}}Service', () => {
+  let service: {{className}}Service;
+  let repository: Repository<{{className}}>;
+
+  const mockEntity: Partial<{{className}}> = {
+    {{#each columns}}
+    {{#unless (and ../features.auditFields (isAuditField this))}}
+    {{#if isPrimaryKey}}
+    {{propertyName name lang="typescript"}}: 1,
+    {{else}}
+    {{#if (eq tsType "string")}}
+    {{propertyName name lang="typescript"}}: 'test-{{name}}',
+    {{else if (eq tsType "number")}}
+    {{propertyName name lang="typescript"}}: 1,
+    {{else if (eq tsType "boolean")}}
+    {{propertyName name lang="typescript"}}: true,
+    {{else if (eq tsType "Date")}}
+    {{propertyName name lang="typescript"}}: new Date(),
+    {{/if}}
+    {{/if}}
+    {{/unless}}
+    {{/each}}
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        {{className}}Service,
+        {
+          provide: getRepositoryToken({{className}}),
+          useValue: {
+            findAndCount: jest.fn().mockResolvedValue([[mockEntity], 1]),
+            findOne: jest.fn().mockResolvedValue(mockEntity),
+            create: jest.fn().mockReturnValue(mockEntity),
+            save: jest.fn().mockResolvedValue(mockEntity),
+            update: jest.fn().mockResolvedValue({ affected: 1 }),
+            delete: jest.fn().mockResolvedValue({ affected: 1 }),
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get<{{className}}Service>({{className}}Service);
+    repository = module.get<Repository<{{className}}>>(getRepositoryToken({{className}}));
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  {{#if features.pagination}}
+  describe('findAll', () => {
+    it('should return paginated items', async () => {
+      const result = await service.findAll(1, 10);
+      expect(result).toBeDefined();
+      expect(result.items).toHaveLength(1);
+      expect(result.total).toBe(1);
+    });
+  });
+  {{/if}}
+
+  describe('findById', () => {
+    it('should return entity by id', async () => {
+      const result = await service.findById(1);
+      expect(result).toBeDefined();
+      expect(result).toEqual(mockEntity);
+    });
+
+    it('should throw NotFoundException when entity not found', async () => {
+      jest.spyOn(repository, 'findOne').mockResolvedValueOnce(null);
+      await expect(service.findById(999)).rejects.toThrow();
+    });
+  });
+
+  describe('create', () => {
+    it('should create and return new entity', async () => {
+      const dto: Create{{className}}Dto = {
+        {{#each columns}}
+        {{#unless (or isPrimaryKey (and ../features.auditFields (isAuditField this)))}}
+        {{#if (eq tsType "string")}}
+        {{propertyName name lang="typescript"}}: 'new-{{name}}',
+        {{else if (eq tsType "number")}}
+        {{propertyName name lang="typescript"}}: 1,
+        {{else if (eq tsType "boolean")}}
+        {{propertyName name lang="typescript"}}: true,
+        {{/if}}
+        {{/unless}}
+        {{/each}}
+      };
+      const result = await service.create(dto);
+      expect(result).toBeDefined();
+    });
+  });
+
+  describe('delete', () => {
+    it('should delete entity by id', async () => {
+      await expect(service.delete(1)).resolves.not.toThrow();
+    });
+
+    it('should throw NotFoundException when deleting non-existent entity', async () => {
+      jest.spyOn(repository, 'delete').mockResolvedValueOnce({ affected: 0, raw: [] });
+      await expect(service.delete(999)).rejects.toThrow();
+    });
+  });
+});

@@ -1,6 +1,7 @@
 import { execSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import type { FileOutput } from '../engine/index.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * 按语言映射到对应的格式化工具和命令
@@ -96,7 +97,7 @@ export function formatFiles(
       const cmd = formatter.command(filePaths);
       execSync(cmd, { stdio: 'pipe', timeout: 30000, cwd: outputDir });
       formatted += filePaths.length;
-      console.log(`[format] ${formatter.tool}: ${filePaths.length} 文件格式化完成`);
+      logger.info(`[format] ${formatter.tool}: ${filePaths.length} 文件格式化完成`);
     } catch (err: any) {
       const msg = err.stderr?.toString() || err.message || '未知错误';
       warnings.push(`[format] ${formatter.tool} 格式化失败: ${msg}`);
@@ -105,8 +106,8 @@ export function formatFiles(
   }
 
   if (warnings.length > 0) {
-    console.warn('\n格式化警告:');
-    warnings.forEach((w) => console.warn(`  ⚠ ${w}`));
+    logger.warn('\n格式化警告:');
+    warnings.forEach((w) => logger.warn(`  ⚠ ${w}`));
   }
 
   return { formatted, skipped, warnings };

@@ -1,0 +1,18 @@
+    @Transactional(readOnly = true)
+    public Page<{{className}}> findAll(Pageable pageable) {
+        return {{camelCase className}}Repository.findAll(pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public {{className}} findByIdOrThrow({{#each columns}}{{#if isPrimaryKey}}{{javaType}} {{propertyName}}{{/if}}{{/each}}) {
+        {{#each columns}}{{#if isPrimaryKey}}{{#if @first}}return {{/if}}{{/if}}{{/each}}{{camelCase className}}Repository.findById({{#each columns}}{{#if isPrimaryKey}}{{#unless @first}}, {{/unless}}{{propertyName}}{{/if}}{{/each}})
+            .orElseThrow(() -> new ResourceNotFoundException("{{className}}", {{#each columns}}{{#if isPrimaryKey}}{{#unless @first}}, {{/unless}}{{propertyName}}{{/if}}{{/each}}));
+    }
+
+    public {{className}} save({{className}} entity) {
+        return {{camelCase className}}Repository.save(entity);
+    }
+
+    public void deleteById({{#each columns}}{{#if isPrimaryKey}}{{javaType}} {{propertyName}}{{/if}}{{/each}}) {
+        {{camelCase className}}Repository.deleteById({{#each columns}}{{#if isPrimaryKey}}{{#unless @first}}, {{/unless}}{{propertyName}}{{/if}}{{/each}});
+    }
