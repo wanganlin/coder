@@ -106,7 +106,7 @@ function isUniqueIndexColumns(schema: TableSchema, columnNames: string[]): boole
   const uniqueIndexes = (schema.indexes || []).filter((idx) => idx.unique);
   return uniqueIndexes.some((idx) => {
     const idxSet = new Set(idx.columns);
-    return columnSet.isSubsetOf(idxSet);
+    return [...columnSet].every((col) => idxSet.has(col));
   });
 }
 
@@ -140,7 +140,8 @@ function isCandidateJunction(schema: TableSchema): boolean {
  *
  * @param schemas 所有已处理的 TableSchema 列表（会被原地修改）
  */
-export function deriveRelationships(schemas: TableSchema[]): void {
+export function deriveRelationships(schemas: TableSchema[], targetFramework: string): void {
+  const targetLanguage = getLanguageFromFramework(targetFramework);
   const schemaMap = new Map<string, TableSchema>();
   for (const schema of schemas) {
     schemaMap.set(schema.name, schema);
@@ -159,10 +160,10 @@ export function deriveRelationships(schemas: TableSchema[]): void {
     if (ext._junction) {
       const j = ext._junction;
       explicitJunctions.set(schema.name, {
-        left: j.leftTable || j.leftTable,
-        right: j.rightTable || j.rightTable,
-        leftCol: j.leftColumn || j.leftColumn,
-        rightCol: j.rightColumn || j.rightColumn,
+        left: j.leftTable,
+        right: j.rightTable,
+        leftCol: j.leftColumn,
+        rightCol: j.rightColumn,
       });
     }
   }
@@ -206,7 +207,7 @@ export function deriveRelationships(schemas: TableSchema[]): void {
         targetTable: fk.referencedTableName,
         targetColumns: fk.referencedColumnNames,
         targetClassName: target ? toClassName(target.name) : toClassName(fk.referencedTableName),
-        targetPropertyName: toPropertyName(fk.referencedTableName, 'java'),
+        targetPropertyName: toPropertyName(fk.referencedTableName, targetLanguage),
       });
     }
 
@@ -226,7 +227,7 @@ export function deriveRelationships(schemas: TableSchema[]): void {
             targetTable: other.name,
             targetColumns: fk.columnNames,
             targetClassName: toClassName(other.name),
-            targetPropertyName: toPropertyName(other.name, 'java'),
+            targetPropertyName: toPropertyName(other.name, targetLanguage),
             mappedBy: mappedByCol,
           });
         }
@@ -243,7 +244,7 @@ export function deriveRelationships(schemas: TableSchema[]): void {
           targetTable: jConfig.right,
           targetColumns: [jConfig.rightCol],
           targetClassName: rightSchema ? toClassName(rightSchema.name) : toClassName(jConfig.right),
-          targetPropertyName: toPropertyName(jConfig.right, 'java'),
+          targetPropertyName: toPropertyName(jConfig.right, targetLanguage),
           mappedBy: junctionName,
         });
       } else if (jConfig.right === schema.name) {
@@ -254,7 +255,7 @@ export function deriveRelationships(schemas: TableSchema[]): void {
           targetTable: jConfig.left,
           targetColumns: [jConfig.leftCol],
           targetClassName: leftSchema ? toClassName(leftSchema.name) : toClassName(jConfig.left),
-          targetPropertyName: toPropertyName(jConfig.left, 'java'),
+          targetPropertyName: toPropertyName(jConfig.left, targetLanguage),
           mappedBy: junctionName,
         });
       }

@@ -18,7 +18,7 @@ const FORMATTERS: Record<
   go: {
     tool: 'gofmt',
     command: (files) => `gofmt -w ${files.join(' ')}`,
-    detect: 'gofmt -help',
+    detect: 'go version',
   },
   python: {
     tool: 'black',

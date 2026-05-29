@@ -63,7 +63,7 @@ export async function runGeneration(
     }
 
     // 4.5 推导表间关联关系（外键 → ManyToOne / OneToMany / ManyToMany / OneToOne）
-    deriveRelationships(decoratedSchemas);
+    deriveRelationships(decoratedSchemas, config.target.framework);
 
     // 5. 初始化模板引擎并加载后端插件
     const engine = new TemplateEngine();
