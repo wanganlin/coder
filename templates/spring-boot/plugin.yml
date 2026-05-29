@@ -11,6 +11,12 @@ skeleton:
     output: src/main/java/{{packagePath}}/{{projectClassName}}Application.java
   - template: skeleton/BaseEntity.java.hbs
     output: src/main/java/{{packagePath}}/entity/BaseEntity.java
+  - template: skeleton/Dockerfile.hbs
+    output: Dockerfile
+  - template: skeleton/docker-compose.yml.hbs
+    output: docker-compose.yml
+  - template: skeleton/V1__init_schema.sql.hbs
+    output: src/main/resources/db/migration/V1__init_schema.sql
 entityTemplates:
   - template: entity/Entity.java.hbs
     output: src/main/java/{{packagePath}}/entity/{{className}}.java

@@ -1,6 +1,6 @@
 {{#if features.swagger}}
 import { ApiProperty, ApiPropertyOptional, PartialType, PickType, OmitType } from '@nestjs/swagger';
-import { IsString, IsNumber, IsBoolean, IsOptional, MaxLength, IsDate, IsNotEmpty } from 'class-validator';
+import { IsString, IsNumber, IsBoolean, IsOptional, MaxLength, MinLength, IsDate, IsNotEmpty, IsEmail, Matches, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 import { {{className}} } from '../entity/{{kebabCase tableName}}.entity';
 {{/if}}
@@ -25,9 +25,11 @@ export class Create{{className}}Dto {
   {{#if (eq sqlType "varchar")}}
   @MaxLength({{#if length}}{{length}}{{else}}255{{/if}})
   {{/if}}
+  {{#if extension}}{{#if extension.email}}@IsEmail(){{/if}}{{#if extension.pattern}}@Matches(/{{extension.pattern}}/){{/if}}{{#if extension.min}}@MinLength({{extension.min}}){{/if}}{{/if}}
   {{/if}}
   {{#if (eq tsType "number")}}
   @IsNumber()
+  {{#if extension}}{{#if extension.min}}@Min({{extension.min}}){{/if}}{{#if extension.max}}@Max({{extension.max}}){{/if}}{{/if}}
   {{/if}}
   {{#if (eq tsType "boolean")}}
   @IsBoolean()
@@ -56,4 +58,28 @@ export class {{className}}Response {
   {{propertyName name lang="typescript"}}: {{#if (eq tsType "Date")}}Date{{else}}{{tsType}}{{/if}};
 
   {{/each}}
+
+{{#if table.relationships.length}}
+  // ─── 关联关系字段 ─────────────────────────────────
+{{#each table.relationships}}
+{{#if (or (eq type "ManyToOne") (eq type "OneToOne"))}}
+{{#if ../../features.swagger}}
+  @ApiProperty({ description: '关联 {{targetClassName}}', required: false })
+{{/if}}
+  {{targetPropertyName}}: {{targetClassName}};
+{{/if}}
+{{#if (eq type "OneToMany")}}
+{{#if ../../features.swagger}}
+  @ApiProperty({ description: '{{targetClassName}} 列表', required: false })
+{{/if}}
+  {{targetPropertyName}}List: {{targetClassName}}[];
+{{/if}}
+{{#if (eq type "ManyToMany")}}
+{{#if ../../features.swagger}}
+  @ApiProperty({ description: '{{targetClassName}} 列表 (多对多)', required: false })
+{{/if}}
+  {{pluralize targetPropertyName}}: {{targetClassName}}[];
+{{/if}}
+{{/each}}
+{{/if}}
 }

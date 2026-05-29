@@ -15,6 +15,12 @@ skeleton:
     output: src/database/database.providers.ts
   - template: skeleton/eslint.config.js.hbs
     output: eslint.config.js
+  - template: skeleton/Dockerfile.hbs
+    output: Dockerfile
+  - template: skeleton/docker-compose.yml.hbs
+    output: docker-compose.yml
+  - template: skeleton/migration.ts.hbs
+    output: src/migrations/{{timestamp}}_InitSchema.ts
 entityTemplates:
   - template: entity/entity.ts.hbs
     output: src/entity/{{kebabCase tableName}}.entity.ts

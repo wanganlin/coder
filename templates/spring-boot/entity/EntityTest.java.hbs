@@ -94,4 +94,21 @@ class {{className}}Test {
         service.deleteById(id);
         verify(repository).deleteById(id);
     }
+{{#if table.relationships.length}}
+
+    @Test
+    void shouldHaveRelationshipFields() {
+{{#each table.relationships}}
+{{#if (or (eq type "ManyToOne") (eq type "OneToOne"))}}
+        assertThat(entity.get{{pascalCase targetPropertyName}}()).isNull(); // 未加载时为 null
+{{/if}}
+{{#if (eq type "OneToMany")}}
+        assertThat(entity.get{{pascalCase targetPropertyName}}List()).isEmpty();
+{{/if}}
+{{#if (eq type "ManyToMany")}}
+        assertThat(entity.get{{pascalCase (pluralize targetPropertyName)}}()).isEmpty();
+{{/if}}
+{{/each}}
+    }
+{{/if}}
 }

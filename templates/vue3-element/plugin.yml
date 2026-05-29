@@ -17,6 +17,10 @@ skeleton:
     output: src/router/index.ts
   - template: skeleton/axios.ts.hbs
     output: src/api/axios.ts
+  - template: skeleton/i18n.ts.hbs
+    output: src/i18n/index.ts
+  - template: skeleton/zh-CN.json.hbs
+    output: src/locales/zh-CN.json
 entityTemplates:
   - template: entity/api.ts.hbs
     output: src/api/{{kebabCase tableName}}.ts
@@ -24,3 +28,6 @@ entityTemplates:
     output: src/views/{{kebabCase tableName}}/ListView.vue
   - template: entity/FormView.vue.hbs
     output: src/views/{{kebabCase tableName}}/FormView.vue
+  - template: entity/api.test.ts.hbs
+    output: src/api/__tests__/{{kebabCase tableName}}.test.ts
+    test: true

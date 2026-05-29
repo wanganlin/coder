@@ -18,6 +18,20 @@ class {{className}}Resource extends JsonResource
             {{#each columns}}
             '{{propertyName name lang="php"}}' => $this->{{name}},
             {{/each}}
+{{#if table.relationships.length}}
+            // ─── 关联关系 ─────────────────────────────────
+{{#each table.relationships}}
+{{#if (or (eq type "ManyToOne") (eq type "OneToOne"))}}
+            '{{targetPropertyName}}' => new {{targetClassName}}Resource($this->whenLoaded('{{targetPropertyName}}')),
+{{/if}}
+{{#if (eq type "OneToMany")}}
+            '{{targetPropertyName}}List' => {{targetClassName}}Resource::collection($this->whenLoaded('{{targetPropertyName}}List')),
+{{/if}}
+{{#if (eq type "ManyToMany")}}
+            '{{pluralize targetPropertyName}}' => {{targetClassName}}Resource::collection($this->whenLoaded('{{pluralize targetPropertyName}}')),
+{{/if}}
+{{/each}}
+{{/if}}
         ];
     }
 }

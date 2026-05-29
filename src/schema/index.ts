@@ -31,6 +31,7 @@ export function processTableSchema(
   rawTable: any,
   targetFramework: string,
   extensions?: Record<string, Record<string, FieldExtension>>,
+  customTypeMappings?: Record<string, string>,
 ): TableSchema {
   const targetLanguage = getLanguageFromFramework(targetFramework);
   const tableName = rawTable.name;
@@ -39,13 +40,13 @@ export function processTableSchema(
     // 1. 获取目标语言的属性名称
     const propertyName = toPropertyName(col.name, targetLanguage);
 
-    // 2. 生成所有语言对应的映射类型
+    // 2. 生成所有语言对应的映射类型（用户自定义映射优先级高于内置默认）
     const rawOrSqlType = col.rawType || col.sqlType;
-    const javaType = mapSqlType(rawOrSqlType, 'java');
-    const goType = mapSqlType(rawOrSqlType, 'go');
-    const pythonType = mapSqlType(rawOrSqlType, 'python');
-    const phpType = mapSqlType(rawOrSqlType, 'php');
-    const tsType = mapSqlType(rawOrSqlType, 'typescript');
+    const javaType = mapSqlType(rawOrSqlType, 'java', customTypeMappings);
+    const goType = mapSqlType(rawOrSqlType, 'go', customTypeMappings);
+    const pythonType = mapSqlType(rawOrSqlType, 'python', customTypeMappings);
+    const phpType = mapSqlType(rawOrSqlType, 'php', customTypeMappings);
+    const tsType = mapSqlType(rawOrSqlType, 'typescript', customTypeMappings);
 
     // 3. 提取并合并扩展属性
     const colExtension = extensions?.[tableName]?.[col.name] || undefined;

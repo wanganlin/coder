@@ -9,6 +9,12 @@ skeleton:
     output: database.py
   - template: skeleton/main.py.hbs
     output: main.py
+  - template: skeleton/Dockerfile.hbs
+    output: Dockerfile
+  - template: skeleton/docker-compose.yml.hbs
+    output: docker-compose.yml
+  - template: skeleton/alembic.ini.hbs
+    output: alembic.ini
 entityTemplates:
   - template: entity/model.py.hbs
     output: models/{{snakeCase tableName}}.py

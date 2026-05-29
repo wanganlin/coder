@@ -1,0 +1,39 @@
+{
+  "app": {
+    "title": "Coder 管理系统",
+    "home": "首页"
+  },
+  "common": {
+    "confirm": "确定",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "add": "新增",
+    "search": "搜索",
+    "reset": "重置",
+    "export": "导出",
+    "back": "返回",
+    "submit": "提交",
+    "success": "操作成功",
+    "error": "操作失败",
+    "pleaseInput": "请输入{label}",
+    "pleaseSelect": "请选择{label}",
+    "confirmDelete": "确认删除？此操作不可撤销"
+  },
+  "pagination": {
+    "total": "共 {total} 条",
+    "pageSize": "条/页"
+  },
+{{#each tables}}
+  "{{propertyName}}": {
+    "list": "{{className}} 管理",
+    "add": "新增{{className}}",
+    "edit": "编辑{{className}}",
+    "detail": "{{className}} 详情",
+{{#each columns}}
+    "{{propertyName name lang='typescript'}}": "{{#if comment}}{{comment}}{{else}}{{name}}{{/if}}"{{#unless @last}},{{/unless}}
+{{/each}}
+  }{{#unless @last}},{{/unless}}
+{{/each}}
+}

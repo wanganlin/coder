@@ -13,7 +13,7 @@ describe('NestJS 11 + TypeORM 0.3 Templates Integration (T9)', () => {
     const metadata = engine.getPluginMetadata();
     expect(metadata.name).toBe('nestjs');
     expect(metadata.language).toBe('typescript');
-    expect(metadata.skeleton?.length).toBe(6);
+    expect(metadata.skeleton?.length).toBe(9);
     expect(metadata.entityTemplates?.length).toBe(6);
   });
 
@@ -34,7 +34,7 @@ describe('NestJS 11 + TypeORM 0.3 Templates Integration (T9)', () => {
     };
 
     const outputs = engine.renderSkeleton(config);
-    expect(outputs.length).toBe(6);
+    expect(outputs.length).toBe(9);
 
     const pkgFile = outputs.find((o) => o.outputPath === 'package.json')!;
     expect(pkgFile).toBeDefined();

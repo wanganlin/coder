@@ -13,7 +13,7 @@ describe('Python (FastAPI 0.136 + SQLAlchemy 2.x + Pydantic v2) Templates Integr
     const metadata = engine.getPluginMetadata();
     expect(metadata.name).toBe('fastapi');
     expect(metadata.language).toBe('python');
-    expect(metadata.skeleton?.length).toBe(3);
+    expect(metadata.skeleton?.length).toBe(6);
     expect(metadata.entityTemplates?.length).toBe(5);
   });
 
@@ -45,7 +45,7 @@ describe('Python (FastAPI 0.136 + SQLAlchemy 2.x + Pydantic v2) Templates Integr
     ];
 
     const outputs = engine.renderSkeleton(config, tables);
-    expect(outputs.length).toBe(3);
+    expect(outputs.length).toBe(6);
 
     const reqsFile = outputs.find((o) => o.outputPath === 'requirements.txt')!;
     expect(reqsFile).toBeDefined();

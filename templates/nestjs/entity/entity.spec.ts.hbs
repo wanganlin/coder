@@ -54,6 +54,25 @@ describe('{{className}}Service', () => {
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
+{{#if table.relationships.length}}
+
+  describe('entity relationships', () => {
+    it('should have relationship fields declared', () => {
+      const entity = new {{className}}();
+{{#each table.relationships}}
+{{#if (or (eq type "ManyToOne") (eq type "OneToOne"))}}
+      expect(entity).toHaveProperty('{{targetPropertyName}}');
+{{/if}}
+{{#if (eq type "OneToMany")}}
+      expect(entity).toHaveProperty('{{targetPropertyName}}List');
+{{/if}}
+{{#if (eq type "ManyToMany")}}
+      expect(entity).toHaveProperty('{{pluralize targetPropertyName}}');
+{{/if}}
+{{/each}}
+    });
+  });
+{{/if}}
 
   {{#if features.pagination}}
   describe('findAll', () => {

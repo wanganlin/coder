@@ -10,6 +10,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.math.BigDecimal;
+{{#if table.relationships.length}}
+import java.util.List;
+import java.util.ArrayList;
+{{/if}}
 
 {{#if features.swagger}}
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -39,6 +43,12 @@ public class {{className}}DTO {
     @Size(max = {{length}}, message = "{{propertyName name}} length cannot exceed {{length}}")
     {{/if}}
     {{/if}}
+    {{#if extension}}
+    {{#if extension.email}}@Email(message = "{{propertyName name}} must be a valid email"){{/if}}
+    {{#if extension.pattern}}@Pattern(regexp = "{{extension.pattern}}", message = "{{propertyName name}} format is invalid"){{/if}}
+    {{#if extension.min}}@Min(value = {{extension.min}}, message = "{{propertyName name}} must be at least {{extension.min}}"){{/if}}
+    {{#if extension.max}}@Max(value = {{extension.max}}, message = "{{propertyName name}} must be at most {{extension.max}}"){{/if}}
+    {{/if}}
     {{#if ../features.swagger}}
     @Schema(description = "{{comment}}")
     {{/if}}
@@ -46,4 +56,28 @@ public class {{className}}DTO {
 
     {{/if}}
     {{/each}}
+
+{{#if table.relationships.length}}
+    // ─── 关联关系字段 ─────────────────────────────────
+{{#each table.relationships}}
+{{#if (or (eq type "ManyToOne") (eq type "OneToOne"))}}
+{{#if ../../features.swagger}}
+    @Schema(description = "关联 {{targetClassName}}")
+{{/if}}
+    private {{targetClassName}} {{targetPropertyName}};
+{{/if}}
+{{#if (eq type "OneToMany")}}
+{{#if ../../features.swagger}}
+    @Schema(description = "{{targetClassName}} 列表")
+{{/if}}
+    private List<{{targetClassName}}> {{targetPropertyName}}List;
+{{/if}}
+{{#if (eq type "ManyToMany")}}
+{{#if ../../features.swagger}}
+    @Schema(description = "{{targetClassName}} 列表 (多对多)")
+{{/if}}
+    private List<{{targetClassName}}> {{pluralize targetPropertyName}};
+{{/if}}
+{{/each}}
+{{/if}}
 }

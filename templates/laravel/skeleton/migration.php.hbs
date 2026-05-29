@@ -1,0 +1,40 @@
+<?php
+
+// Coder Generated Laravel Migration
+// Usage: php artisan migrate
+// Example migration for {{#each tables}}{{className}}{{#unless @last}}, {{/unless}}{{/each}}
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+{{#each tables}}
+        Schema::create('{{name}}', function (Blueprint $table) {
+{{#each columns}}
+{{#if isPrimaryKey}}
+{{#if isAutoIncrement}}
+            $table->id('{{name}}');
+{{else}}
+            $table->{{#if (eq phpType "string")}}string{{else if (eq phpType "int")}}bigInteger{{/if}}('{{name}}')->primary();
+{{/if}}
+{{else}}
+            $table->{{#if (eq phpType "string")}}string{{else if (eq phpType "int")}}integer{{else if (eq phpType "bool")}}boolean{{else if (eq phpType "float")}}float{{else if (eq sqlType "datetime")}}dateTime{{else if (eq sqlType "date")}}date{{else if (eq sqlType "text")}}text{{else if (eq sqlType "json")}}json{{/if}}('{{name}}'{{#if length}}, {{length}}{{/if}}){{#if nullable}}->nullable(){{/if}};
+{{/if}}
+{{/each}}
+            $table->timestamps();
+        });
+
+{{/each}}
+    }
+
+    public function down(): void
+    {
+{{#each tables}}
+        Schema::dropIfExists('{{name}}');
+{{/each}}
+    }
+};

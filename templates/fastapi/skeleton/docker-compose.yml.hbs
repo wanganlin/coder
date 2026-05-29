@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - '8000:8000'
+    environment:
+      - DATABASE_URL={{#if (eq config.datasource.type "mysql")}}mysql+pymysql{{else}}postgresql+psycopg2{{/if}}://root:password@db:{{#if (eq config.datasource.type "mysql")}}3306{{else}}5432{{/if}}/appdb
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    {{#if (eq config.datasource.type "mysql")}}
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: appdb
+    ports:
+      - '3306:3306'
+    volumes:
+      - db_data:/var/lib/mysql
+    {{else}}
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: appdb
+    ports:
+      - '5432:5432'
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    {{/if}}
+
+volumes:
+  db_data:

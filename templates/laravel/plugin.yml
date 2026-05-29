@@ -11,6 +11,12 @@ skeleton:
     output: app/Http/Controllers/Controller.php
   - template: skeleton/api.php.hbs
     output: routes/api.php
+  - template: skeleton/Dockerfile.hbs
+    output: Dockerfile
+  - template: skeleton/docker-compose.yml.hbs
+    output: docker-compose.yml
+  - template: skeleton/migration.php.hbs
+    output: database/migrations/0001_01_01_000000_create_tables.php
 entityTemplates:
   - template: entity/Model.php.hbs
     output: app/Models/{{className}}.php

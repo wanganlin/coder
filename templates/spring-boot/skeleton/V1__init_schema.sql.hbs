@@ -1,0 +1,12 @@
+-- Coder Generated Flyway Migration
+-- V1__init_schema.sql
+
+{{#each tables}}
+CREATE TABLE {{name}} (
+{{#each columns}}
+    {{name}} {{rawType}}{{#unless nullable}} NOT NULL{{/unless}}{{#if isAutoIncrement}} AUTO_INCREMENT{{/if}}{{#if @last}}{{else}},{{/if}}
+{{/each}}{{#if primaryKey.length}},
+    PRIMARY KEY ({{#each primaryKey}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}){{/if}}
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+{{/each}}

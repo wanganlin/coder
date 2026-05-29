@@ -1,0 +1,38 @@
+// Coder Generated TypeORM Migration
+// Usage: npm run typeorm migration:run
+
+import { MigrationInterface, QueryRunner, Table } from 'typeorm';
+
+export class InitSchema{{timestamp}} implements MigrationInterface {
+  name = 'InitSchema{{timestamp}}';
+
+  public async up(queryRunner: QueryRunner): Promise<void> {
+{{#each tables}}
+    await queryRunner.createTable(
+      new Table({
+        name: '{{name}}',
+        columns: [
+{{#each columns}}
+          {
+            name: '{{name}}',
+            type: '{{#if (eq sqlType "varchar")}}varchar{{else if (eq sqlType "text")}}text{{else if (eq sqlType "bigint")}}bigint{{else if (eq sqlType "int")}}int{{else if (eq sqlType "tinyint")}}tinyint{{else if (eq sqlType "boolean")}}boolean{{else if (eq sqlType "datetime")}}datetime{{else if (eq sqlType "date")}}date{{else}}{{sqlType}}{{/if}}'{{#if (eq sqlType "varchar")}},
+            length: '{{#if length}}{{length}}{{else}}255{{/if}}'{{/if}},
+            isNullable: {{#if nullable}}true{{else}}false{{/if}},
+            isPrimary: {{#if isPrimaryKey}}true{{else}}false{{/if}},
+            isGenerated: {{#if isAutoIncrement}}true{{else}}false{{/if}},
+          }{{#unless @last}},{{/unless}}
+{{/each}}
+        ],
+      }),
+      true
+    );
+
+{{/each}}
+  }
+
+  public async down(queryRunner: QueryRunner): Promise<void> {
+{{#each tables}}
+    await queryRunner.dropTable('{{name}}');
+{{/each}}
+  }
+}

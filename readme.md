@@ -33,11 +33,14 @@
 - 🗄️ **数据库优先** — 直连 MySQL / PostgreSQL，自动读取表结构、注释、索引和外键；也支持从 DDL 文件导入
 - 🌍 **多语言多框架** — 一套 Schema，一键切换生成 Java（Spring Boot 3.5）、Go（Gin 1.12）、Python（FastAPI 0.136）、PHP（Laravel 13）、TypeScript（NestJS 11）后端代码
 - 🖥️ **前端同步生成** — 基于表元数据自动生成 Vue 3 + Element Plus 2.14 的表格页、表单页和 API 调用层
-- 🧩 **插件化模板** — 每个框架封装为独立插件（Handlebars 模板集 + YAML 配置），支持社区分享和自定义
-- 🔒 **保护区 & 增量生成** — 注释标记划分生成区与用户区，重新生成时只覆盖生成区，手写业务代码永远不丢
-- 📊 **关联自动推导** — 根据外键生成 `@OneToMany`、`@ManyToMany` 实体关联和对应的联表查询方法
-- 📝 **注释即文档** — 表注释 / 字段注释自动映射为代码注释和 OpenAPI 3.0 文档描述
-- 🎨 **代码格式化** — 生成后自动调用目标语言格式化工具（Java: `google-java-format`、Go: `gofmt`、Python: `black`、PHP: `php-cs-fixer`、TS/前端: `prettier`）
+- 🧩 **插件化模板** — 每个框架封装为独立插件（Handlebars 模板集 + YAML 配置），支持自定义和社区分享
+- 🔒 **保护区 & 增量生成** — 注释标记划分生成区与用户区，重新生成时只覆盖生成区；支持多区域命名保护
+- 📊 **关联自动推导** — 根据外键自动推导 ManyToOne / OneToMany / OneToOne / ManyToMany，支持中间表自动检测和配置覆盖
+- 🔢 **枚举类型生成** — `coder.yml` 中定义 enum 值，自动生成各语言原生枚举类型（Java enum / Go iota / Python Enum / PHP enum / TS enum）
+- ✅ **代码验证** — 生成后自动运行编译检查（javac / go vet / mypy / php -l / tsc --noEmit）和代码格式化
+- 🐳 **DevOps 就绪** — 自动生成 Dockerfile、docker-compose.yml 和数据库迁移脚本（Flyway/golang-migrate/Alembic/Laravel/TypeORM）
+- 🌐 **国际化支持** — 前端自动生成 i18n 语言包（zh-CN），UI 文本与代码分离
+- 👁️ **Watch 模式** — `--watch` 监听配置文件变更，自动触发重新生成
 
 ---
 
@@ -100,7 +103,7 @@ templates/
 
 ## 🚀 快速开始
 
-> ⚠️ 项目处于早期开发阶段，以下为目标用法示例。
+> Coder 已具备生产级代码生成能力，支持 5 种后端框架 + 1 种前端框架。
 
 ### 安装
 
@@ -139,17 +142,34 @@ tables:
 
 features:
   swagger: true              # 生成 OpenAPI 3.0 注解
-  unitTest: true             # 生成单元测试骨架（JUnit 5 / pytest / Go testing）
+  unitTest: true             # 生成单元测试骨架（JUnit 5 / pytest / Go testing / PHPUnit / Jest）
   pagination: true           # 内置分页查询支持
   auditFields: true          # 自动识别 created_at / updated_by 并注入审计基类
+  format: true               # 生成后自动格式化代码
+  verify: true               # 生成后自动编译验证
+
+# extends: coder.base.yml    # 继承父配置文件（支持配置复用和环境分离）
+
+# typeMappings:              # 自定义 SQL 类型映射（覆盖内置默认值）
+#   json: JsonNode           #   例如将 json 类型映射为 Jackson 的 JsonNode
 
 extensions:                  # 扩展属性：为字段补充生成器无法从数据库推导的信息
   user:
     status:
-      enum: ["ACTIVE", "INACTIVE", "BANNED"]    # 标记为枚举类型
+      enum: ["ACTIVE", "INACTIVE", "BANNED"]    # 标记为枚举类型（自动生成各语言原生 Enum）
       frontendWidget: select                     # 前端控件类型：input | select | datepicker | switch
+      email: true                                # 验证为邮箱格式
+      min: 0                                     # 最小值 / 最小长度
+      max: 100                                   # 最大值 / 最大长度
+      pattern: "^[a-zA-Z]+$"                     # 正则验证
     phone:
       desensitize: phone                         # 脱敏规则：phone | email | idcard
+  user_role:                                     # 中间表配置
+    _junction:                                    #   显式声明 ManyToMany 联结关系
+      leftTable: user                            #   左表名
+      rightTable: role                           #   右表名
+      leftColumn: user_id                        #   左表 FK 列
+      rightColumn: role_id                       #   右表 FK 列
 ```
 
 ---
@@ -186,13 +206,13 @@ public class UserService {
 
 ## 🗺️ 路线图
 
-| 阶段 | 目标 | 核心交付 |
+| 阶段 | 状态 | 核心交付 |
 |------|------|----------|
-| **Phase 1 — MVP** | 跑通完整流程 | MySQL / PostgreSQL 数据源 → 统一 Schema → Spring Boot 3.5（JPA）代码生成 → CLI 工具 |
-| **Phase 2 — 扩展后端栈** | 验证多框架设计 | 新增 Gin 1.12、FastAPI 0.136、Laravel 13、NestJS 11 四套后端模板 |
-| **Phase 3 — 体验完善** | 生产可用 | 保护区 & 增量生成、代码格式化、多表关联推导、审计字段识别、单元测试骨架 |
-| **Phase 4 — 前端 & 文档** | 全栈覆盖 | Vue3 + Element Plus 前端生成、OpenAPI 3.0 文档导出、数据库迁移脚本 |
-| **Phase 5 — 生态化** | 社区驱动 | 插件体系 & 模板市场、VSCode 插件、Web 可视化平台、社区模板贡献 |
+| **Phase 1 — MVP** | ✅ 完成 | MySQL / PostgreSQL 数据源 → 统一 Schema → Spring Boot 3.5（JPA）代码生成 → CLI 工具 |
+| **Phase 2 — 扩展后端栈** | ✅ 完成 | 新增 Gin 1.12、FastAPI 0.136、Laravel 13、NestJS 11 四套后端模板 |
+| **Phase 3 — 体验完善** | ✅ 完成 | 保护区 & 增量生成、代码格式化、多表关联推导、审计字段识别、单元测试骨架、枚举类型生成、增强验证规则、DTO 关系字段、日志系统 |
+| **Phase 4 — 前端 & DevOps** | ✅ 完成 | Vue3 + Element Plus 前端生成、数据库迁移脚本、Dockerfile + docker-compose、Watch 模式、配置继承、插件发现增强、i18n 支持 |
+| **Phase 5 — 生态化** | 🔜 规划中 | 模板市场、VSCode 插件、Web 可视化平台、社区模板贡献 |
 
 ---
 

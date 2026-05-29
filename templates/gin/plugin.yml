@@ -11,6 +11,12 @@ skeleton:
     output: main.go
   - template: skeleton/router.go.hbs
     output: router.go
+  - template: skeleton/Dockerfile.hbs
+    output: Dockerfile
+  - template: skeleton/docker-compose.yml.hbs
+    output: docker-compose.yml
+  - template: skeleton/migration.up.sql.hbs
+    output: migrations/000001_init_schema.up.sql
 entityTemplates:
   - template: entity/model.go.hbs
     output: model/{{snakeCase tableName}}.go

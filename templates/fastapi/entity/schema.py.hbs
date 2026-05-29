@@ -13,13 +13,14 @@ class {{className}}Create(BaseModel):
     {{name}}: {{pythonType}} = Field(
         ...,
         {{#if (eq pythonType "str")}}{{#if length}}max_length={{length}}, {{/if}}{{/if}}
+        {{#if extension}}{{#if extension.email}}pattern=r"^[^@]+@[^@]+\.[^@]+$", {{/if}}{{#if extension.pattern}}pattern=r"{{extension.pattern}}", {{/if}}{{#if extension.min}}{{#if (eq pythonType "str")}}min_length={{extension.min}}, {{else}}ge={{extension.min}}, {{/if}}{{/if}}{{#if extension.max}}{{#if (eq pythonType "str")}}max_length={{extension.max}}, {{else}}le={{extension.max}}, {{/if}}{{/if}}{{/if}}
         description="{{comment}}"
     )
     {{/if}}
     {{/unless}}
     {{/unless}}
     {{/each}}
-    
+
     # Optional fields
     {{#each columns}}
     {{#unless isPrimaryKey}}
@@ -29,6 +30,7 @@ class {{className}}Create(BaseModel):
     {{name}}: Optional[{{pythonType}}] = Field(
         default=None,
         {{#if (eq pythonType "str")}}{{#if length}}max_length={{length}}, {{/if}}{{/if}}
+        {{#if extension}}{{#if extension.email}}pattern=r"^[^@]+@[^@]+\.[^@]+$", {{/if}}{{#if extension.pattern}}pattern=r"{{extension.pattern}}", {{/if}}{{#if extension.min}}{{#if (eq pythonType "str")}}min_length={{extension.min}}, {{else}}ge={{extension.min}}, {{/if}}{{/if}}{{#if extension.max}}{{#if (eq pythonType "str")}}max_length={{extension.max}}, {{else}}le={{extension.max}}, {{/if}}{{/if}}{{/if}}
         description="{{comment}}"
     )
     {{/if}}
@@ -44,6 +46,7 @@ class {{className}}Update(BaseModel):
     {{name}}: Optional[{{pythonType}}] = Field(
         default=None,
         {{#if (eq pythonType "str")}}{{#if length}}max_length={{length}}, {{/if}}{{/if}}
+        {{#if extension}}{{#if extension.email}}pattern=r"^[^@]+@[^@]+\.[^@]+$", {{/if}}{{#if extension.pattern}}pattern=r"{{extension.pattern}}", {{/if}}{{#if extension.min}}{{#if (eq pythonType "str")}}min_length={{extension.min}}, {{else}}ge={{extension.min}}, {{/if}}{{/if}}{{#if extension.max}}{{#if (eq pythonType "str")}}max_length={{extension.max}}, {{else}}le={{extension.max}}, {{/if}}{{/if}}{{/if}}
         description="{{comment}}"
     )
     {{/if}}
@@ -72,3 +75,18 @@ class {{className}}Response(BaseModel):
     {{/each}}
 
     model_config = ConfigDict(from_attributes=True)
+
+{{#if table.relationships.length}}
+    # ─── 关联关系字段 ─────────────────────────────────
+{{#each table.relationships}}
+{{#if (or (eq type "ManyToOne") (eq type "OneToOne"))}}
+    {{snakeCase targetPropertyName}}: Optional["{{targetClassName}}Response"] = Field(default=None, description="关联 {{targetClassName}}")
+{{/if}}
+{{#if (eq type "OneToMany")}}
+    {{snakeCase targetPropertyName}}_list: List["{{targetClassName}}Response"] = Field(default_factory=list, description="{{targetClassName}} 列表")
+{{/if}}
+{{#if (eq type "ManyToMany")}}
+    {{snakeCase (pluralize targetPropertyName)}}: List["{{targetClassName}}Response"] = Field(default_factory=list, description="{{targetClassName}} 列表 (多对多)")
+{{/if}}
+{{/each}}
+{{/if}}

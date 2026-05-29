@@ -35,6 +35,23 @@ class Test{{className}}:
         """测试表名配置"""
         assert {{className}}.__tablename__ == "{{tableName}}"
 
+{{#if table.relationships.length}}
+    def test_relationship_fields_exist(self):
+        """测试关联关系字段声明"""
+        entity = {{className}}()
+{{#each table.relationships}}
+{{#if (or (eq type "ManyToOne") (eq type "OneToOne"))}}
+        assert hasattr(entity, "{{snakeCase targetPropertyName}}")
+{{/if}}
+{{#if (eq type "OneToMany")}}
+        assert hasattr(entity, "{{snakeCase targetPropertyName}}_list")
+{{/if}}
+{{#if (eq type "ManyToMany")}}
+        assert hasattr(entity, "{{snakeCase (pluralize targetPropertyName)}}")
+{{/if}}
+{{/each}}
+
+{{/if}}
     {{#each columns}}
     {{#if (eq pythonType "str")}}
     def test_{{name}}_nullable(self):

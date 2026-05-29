@@ -22,6 +22,7 @@ class Store{{className}}Request extends FormRequest
                 '{{#if nullable}}nullable{{else}}required{{/if}}',
                 '{{#if (eq phpType "string")}}string{{/if}}{{#if (eq phpType "int")}}integer{{/if}}{{#if (eq phpType "float")}}numeric{{/if}}{{#if (eq phpType "bool")}}boolean{{/if}}',
                 {{#if length}}'max:{{length}}',{{/if}}
+                {{#if extension}}{{#if extension.email}}'email',{{/if}}{{#if extension.pattern}}'regex:{{extension.pattern}}',{{/if}}{{#if extension.min}}'min:{{extension.min}}',{{/if}}{{#if extension.max}}'max:{{extension.max}}',{{/if}}{{/if}}
             ],
             {{/if}}
             {{/unless}}

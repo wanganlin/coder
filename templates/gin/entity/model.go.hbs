@@ -4,13 +4,26 @@ import (
 	"time"
 )
 
+{{#each columns}}
+{{#if extension.enum}}
+// {{../className}}{{pascalCase name}} 枚举
+type {{../className}}{{pascalCase name}} string
+
+const (
+{{#each extension.enum}}
+    {{../../../className}}{{pascalCase ../../name}}{{pascalCase this}} {{../../../className}}{{pascalCase ../../name}} = "{{this}}"
+{{/each}}
+)
+{{/if}}
+{{/each}}
+
 // {{className}} {{tableComment}}
 type {{className}} struct {
 	{{#each columns}}
 	{{#if (and ../features.auditFields (isAuditField this))}}
 	// 审计字段 {{name}} 由中间件/GORM Hooks 自动填充
 	{{else}}
-	{{pascalCase name}} {{goType}} `gorm:"column:{{name}}{{#if isPrimaryKey}};primaryKey{{#if isAutoIncrement}};autoIncrement{{/if}}{{/if}}{{#unless nullable}};not null{{/unless}}" json:"{{propertyName name}}"`
+	{{pascalCase name}} {{#if extension.enum}}{{../className}}{{pascalCase name}}{{else}}{{goType}}{{/if}} `gorm:"column:{{name}}{{#if isPrimaryKey}};primaryKey{{#if isAutoIncrement}};autoIncrement{{/if}}{{/if}}{{#unless nullable}};not null{{/unless}}" json:"{{propertyName name}}"`
 	{{/if}}
 	{{/each}}
 

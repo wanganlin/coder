@@ -124,10 +124,10 @@ const rules = computed<FormRules>(() => ({
   {{#unless isPrimaryKey}}
   {{#unless isAutoIncrement}}
   {{#if (and ../features.auditFields (isAuditField this))}}
-  {{else if nullable}}
   {{else}}
   {{propertyName name lang="typescript"}}: [
-    { required: true, message: '请输入{{#if comment}}{{comment}}{{else}}{{name}}{{/if}}', trigger: 'blur' },
+    {{#unless nullable}}{ required: true, message: '请输入{{#if comment}}{{comment}}{{else}}{{name}}{{/if}}', trigger: 'blur' },{{/unless}}
+    {{#if extension}}{{#if extension.email}}{ type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' },{{/if}}{{#if extension.pattern}}{ pattern: /{{extension.pattern}}/, message: '格式不正确', trigger: 'blur' },{{/if}}{{#if extension.min}}{ min: {{extension.min}}, message: '最小值为{{extension.min}}', trigger: 'blur' },{{/if}}{{#if extension.max}}{ max: {{extension.max}}, message: '最大值为{{extension.max}}', trigger: 'blur' },{{/if}}{{/if}}
   ],
   {{/if}}
   {{/unless}}

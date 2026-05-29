@@ -99,4 +99,22 @@ export function registerAllHelpers(hbs: typeof Handlebars): void {
     }
     return val;
   });
+
+  // Protected region block helper — wraps content in CODER_GENERATED markers
+  // Usage: {{#protectedRegion "imports"}}import ...{{/protectedRegion}}
+  hbs.registerHelper('protectedRegion', function (this: any, regionName: unknown, options: any) {
+    // Handle the case where the helper is called without a region name
+    const name = typeof regionName === 'string' ? regionName : '';
+    const opts = typeof regionName === 'string' ? options : (regionName as any);
+    const content = typeof opts?.fn === 'function' ? opts.fn(this) : '';
+    const language = (this && this.language) || 'java';
+    const prefix = language === 'python' ? '#' : '//';
+    const nameSuffix = name ? ` (${name})` : '';
+    return [
+      `${prefix} ==== CODER_GENERATED_START${nameSuffix} ====`,
+      `${prefix} Coder 自动生成区域${name ? `: ${name}` : ''}，重新生成时会被覆盖`,
+      content,
+      `${prefix} ==== CODER_GENERATED_END ====`,
+    ].join('\n');
+  });
 }

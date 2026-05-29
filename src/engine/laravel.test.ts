@@ -13,7 +13,7 @@ describe('PHP (Laravel 13 + Eloquent ORM) Templates Integration (T10)', () => {
     const metadata = engine.getPluginMetadata();
     expect(metadata.name).toBe('laravel');
     expect(metadata.language).toBe('php');
-    expect(metadata.skeleton?.length).toBe(4);
+    expect(metadata.skeleton?.length).toBe(7);
     expect(metadata.entityTemplates?.length).toBe(6);
   });
 
@@ -45,7 +45,7 @@ describe('PHP (Laravel 13 + Eloquent ORM) Templates Integration (T10)', () => {
     ];
 
     const outputs = engine.renderSkeleton(config, tables);
-    expect(outputs.length).toBe(4);
+    expect(outputs.length).toBe(7);
 
     const composerFile = outputs.find((o) => o.outputPath === 'composer.json')!;
     expect(composerFile).toBeDefined();

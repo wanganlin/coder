@@ -9,6 +9,10 @@ export const FieldExtensionSchema = z
     desensitize: z.enum(['phone', 'email', 'idcard', 'bankcard', 'name']).optional(),
     label: z.string().optional(),
     comment: z.string().optional(),
+    email: z.boolean().optional(),
+    pattern: z.string().optional(),
+    min: z.number().optional(),
+    max: z.number().optional(),
   })
   .catchall(z.any());
 
@@ -18,6 +22,10 @@ export interface FieldExtension {
   desensitize?: 'phone' | 'email' | 'idcard' | 'bankcard' | 'name';
   label?: string;
   comment?: string;
+  email?: boolean;
+  pattern?: string;
+  min?: number;
+  max?: number;
   [key: string]: any;
 }
 
@@ -71,10 +79,12 @@ export const FeaturesConfigSchema = z
 export type FeaturesConfig = z.infer<typeof FeaturesConfigSchema>;
 
 export const CoderConfigSchema = z.object({
+  extends: z.string().optional(),
   datasource: DatasourceConfigSchema,
   target: TargetConfigSchema,
   tables: TablesConfigSchema,
   features: FeaturesConfigSchema,
+  typeMappings: z.record(z.string(), z.string()).optional().default({}),
   extensions: z
     .record(z.string(), z.record(z.string(), FieldExtensionSchema))
     .optional()

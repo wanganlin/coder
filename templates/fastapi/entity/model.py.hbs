@@ -4,7 +4,21 @@ from typing import Optional, Dict, Any, List
 from sqlalchemy import String, Integer, BigInteger, Boolean, DateTime, Date, Time, Float, Numeric, Text, LargeBinary
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
+{{#each columns}}
+{{#if extension.enum}}
+from enum import Enum
+{{/if}}
+{{/each}}
 
+{{#each columns}}
+{{#if extension.enum}}
+class {{../className}}{{pascalCase name}}(str, Enum):
+{{#each extension.enum}}
+    {{this}} = "{{this}}"
+{{/each}}
+
+{{/if}}
+{{/each}}
 class {{className}}(Base):
     __tablename__ = "{{tableName}}"
     {{#if tableComment}}
@@ -15,7 +29,7 @@ class {{className}}(Base):
     {{#if (and ../features.auditFields (isAuditField this))}}
     # 审计字段 {{name}} 由 SQLAlchemy 事件监听器自动填充
     {{else}}
-    {{name}}: Mapped[{{#if nullable}}Optional[{{pythonType}}]{{else}}{{pythonType}}{{/if}}] = mapped_column(
+    {{name}}: Mapped[{{#if nullable}}Optional[{{#if extension.enum}}{{../className}}{{pascalCase name}}{{else}}{{pythonType}}{{/if}}]{{else}}{{#if extension.enum}}{{../className}}{{pascalCase name}}{{else}}{{pythonType}}{{/if}}{{/if}}] = mapped_column(
         {{#if (eq pythonType "str")}}{{#if (eq sqlType "text")}}Text(){{else}}String({{#if length}}{{length}}{{else}}255{{/if}}){{/if}}, {{/if}}
         {{#if (eq pythonType "int")}}{{#if (eq sqlType "bigint")}}BigInteger(){{else}}Integer(){{/if}}, {{/if}}
         {{#if (eq pythonType "bool")}}Boolean(), {{/if}}
@@ -38,19 +52,19 @@ class {{className}}(Base):
 {{#each table.relationships}}
 {{#if (eq type "ManyToOne")}}
     # {{type}}: {{../className}} → {{targetClassName}} (FK: {{#each columnNames}}{{this}}{{/each}})
-    {{snakeCase targetPropertyName}}: Mapped[Optional["{{targetClassName}}"]] = relationship("{{targetClassName}}", foreign_keys=[{{#each columnNames}}{{this}}{{/each}}])
+    {{snakeCase targetPropertyName}}: Mapped[Optional["{{targetClassName}}"]] = relationship("{{targetClassName}}", foreign_keys=[{{#each columnNames}}{{this}}{{/each}}], back_populates="{{snakeCase ../propertyName}}_list")
 {{/if}}
 {{#if (eq type "OneToOne")}}
     # {{type}}: {{../className}} → {{targetClassName}}
-    {{snakeCase targetPropertyName}}: Mapped[Optional["{{targetClassName}}"]] = relationship("{{targetClassName}}", foreign_keys=[{{#each columnNames}}{{this}}{{/each}}], uselist=False)
+    {{snakeCase targetPropertyName}}: Mapped[Optional["{{targetClassName}}"]] = relationship("{{targetClassName}}", foreign_keys=[{{#each columnNames}}{{this}}{{/each}}], uselist=False, back_populates="{{snakeCase ../propertyName}}")
 {{/if}}
 {{#if (eq type "OneToMany")}}
     # {{type}}: {{../className}} ← {{targetClassName}}
-    {{snakeCase targetPropertyName}}_list: Mapped[List["{{targetClassName}}"]] = relationship("{{targetClassName}}")
+    {{snakeCase targetPropertyName}}_list: Mapped[List["{{targetClassName}}"]] = relationship("{{targetClassName}}", back_populates="{{snakeCase ../propertyName}}")
 {{/if}}
 {{#if (eq type "ManyToMany")}}
     # {{type}}: {{../className}} ↔ {{targetClassName}} (联结表: {{mappedBy}})
-    {{snakeCase (pluralize targetPropertyName)}}: Mapped[List["{{targetClassName}}"]] = relationship("{{targetClassName}}", secondary="{{mappedBy}}")
+    {{snakeCase (pluralize targetPropertyName)}}: Mapped[List["{{targetClassName}}"]] = relationship("{{targetClassName}}", secondary="{{mappedBy}}", back_populates="{{snakeCase (pluralize ../propertyName)}}")
 {{/if}}
 {{/each}}
 {{/if}}

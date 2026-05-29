@@ -13,7 +13,7 @@ describe('Go (Gin 1.12 + GORM 2.x) Templates Integration (T8)', () => {
     const metadata = engine.getPluginMetadata();
     expect(metadata.name).toBe('gin');
     expect(metadata.language).toBe('go');
-    expect(metadata.skeleton?.length).toBe(4);
+    expect(metadata.skeleton?.length).toBe(7);
     expect(metadata.entityTemplates?.length).toBe(4);
   });
 
@@ -45,7 +45,7 @@ describe('Go (Gin 1.12 + GORM 2.x) Templates Integration (T8)', () => {
     ];
 
     const outputs = engine.renderSkeleton(config, tables);
-    expect(outputs.length).toBe(4);
+    expect(outputs.length).toBe(7);
 
     const goModFile = outputs.find((o) => o.outputPath === 'go.mod')!;
     expect(goModFile).toBeDefined();

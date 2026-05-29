@@ -24,6 +24,16 @@ import {
 import { IsString, IsNumber, IsBoolean, IsOptional, MaxLength, IsDate } from 'class-validator';
 {{/if}}
 
+{{#each columns}}
+{{#if extension.enum}}
+export enum {{../className}}{{pascalCase name}} {
+{{#each extension.enum}}
+  {{this}} = '{{this}}',
+{{/each}}
+}
+
+{{/if}}
+{{/each}}
 @Entity('{{tableName}}')
 export class {{className}} {{#if features.auditFields}}extends BaseEntity{{/if}} {
   {{#each columns}}
@@ -51,7 +61,7 @@ export class {{className}} {{#if features.auditFields}}extends BaseEntity{{/if}}
   @ApiProperty({ description: '{{comment}}' })
   {{/if}}
   {{/if}}
-  {{propertyName name lang="typescript"}}: {{tsType}};
+  {{propertyName name lang="typescript"}}: {{#if extension.enum}}{{../className}}{{pascalCase name}}{{else}}{{tsType}}{{/if}};
   {{/if}}
   {{/each}}
 
@@ -61,14 +71,14 @@ export class {{className}} {{#if features.auditFields}}extends BaseEntity{{/if}}
   {{#if (eq type "ManyToOne")}}
   // {{type}}: {{../className}} → {{targetClassName}} (FK: {{#each columnNames}}{{this}}{{/each}})
   @ManyToOne(() => {{targetClassName}}, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({{#each columnNames}}{ name: '{{this}}' }{{/each}})
+  @JoinColumn({ name: '{{lookup columnNames 0}}' })
   {{targetPropertyName}}: {{targetClassName}};
 
   {{/if}}
   {{#if (eq type "OneToOne")}}
   // {{type}}: {{../className}} → {{targetClassName}}
   @OneToOne(() => {{targetClassName}}, { nullable: true, onDelete: 'CASCADE' })
-  @JoinColumn({{#each columnNames}}{ name: '{{this}}' }{{/each}})
+  @JoinColumn({ name: '{{lookup columnNames 0}}' })
   {{targetPropertyName}}: {{targetClassName}};
 
   {{/if}}
@@ -83,8 +93,13 @@ export class {{className}} {{#if features.auditFields}}extends BaseEntity{{/if}}
   @ManyToMany(() => {{targetClassName}})
   @JoinTable({
     name: '{{mappedBy}}',
-    joinColumn: { name: '{{#each columnNames}}{{this}}{{/each}}' },
-    inverseJoinColumn: { name: '{{#each targetColumns}}{{this}}{{/each}}' },
+    {{#if (lookup columnNames 1)}}
+    joinColumns: [{{#each columnNames}}{ name: '{{this}}' }{{#unless @last}}, {{/unless}}{{/each}}],
+    inverseJoinColumns: [{{#each targetColumns}}{ name: '{{this}}' }{{#unless @last}}, {{/unless}}{{/each}}],
+    {{else}}
+    joinColumn: { name: '{{lookup columnNames 0}}' },
+    inverseJoinColumn: { name: '{{lookup targetColumns 0}}' },
+    {{/if}}
   })
   {{pluralize targetPropertyName}}: {{targetClassName}}[];
 

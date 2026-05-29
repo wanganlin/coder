@@ -76,6 +76,7 @@ program
   .option('-i, --input <file>', '覆盖 DDL SQL 文件输入路径')
   .option('-f, --framework <name>', '覆盖目标生成框架')
   .option('-o, --output <dir>', '覆盖输出目录')
+  .option('-w, --watch', '监听文件变更并自动重新生成')
   .action(async (options) => {
     const configPath = options.config || 'coder.yml';
 
@@ -87,20 +88,56 @@ program
       output: options.output,
     };
 
-    console.log(style.bold(style.cyan('⚡ Coder 生成引擎开始工作...\n')));
+    async function doGenerate() {
+      console.log(style.bold(style.cyan(`\n⚡ Coder 生成引擎开始工作... [${new Date().toLocaleTimeString()}]\n`)));
 
-    try {
-      const summary = await runGeneration(configPath, overrides);
+      try {
+        const summary = await runGeneration(configPath, overrides);
 
-      console.log(style.green('\n🎉 代码生成大获成功！'));
-      console.log(style.bold(`   处理数据表 (${summary.tablesProcessed.length} 张):`));
-      summary.tablesProcessed.forEach((t) => console.log(`     - ${style.cyan(t)}`));
+        console.log(style.green('\n🎉 代码生成大获成功！'));
+        console.log(style.bold(`   处理数据表 (${summary.tablesProcessed.length} 张):`));
+        summary.tablesProcessed.forEach((t) => console.log(`     - ${style.cyan(t)}`));
 
-      console.log(style.bold(`   生成文件列表 (${summary.filesGenerated.length} 个):`));
-      summary.filesGenerated.forEach((f) => console.log(`     - ${style.green(f)}`));
-    } catch (err: any) {
-      console.error(style.red(`\n❌ 代码生成失败: ${err.message}`));
-      process.exit(1);
+        console.log(style.bold(`   生成文件列表 (${summary.filesGenerated.length} 个):`));
+        summary.filesGenerated.forEach((f) => console.log(`     - ${style.green(f)}`));
+      } catch (err: any) {
+        console.error(style.red(`\n❌ 代码生成失败: ${err.message}`));
+        if (!options.watch) process.exit(1);
+      }
+    }
+
+    if (options.watch) {
+      const { watch } = await import('node:fs');
+      const config = loadConfig(configPath, overrides);
+      const resolvedCfg = resolve(process.cwd(), configPath);
+      const watchPaths = [resolvedCfg];
+
+      // DDL 模式下同时监听输入文件
+      if (config.datasource.type === 'ddl' && config.datasource.input) {
+        watchPaths.push(resolve(process.cwd(), config.datasource.input));
+      }
+
+      console.log(style.cyan('👀 监听模式已启动，文件变更时将自动重新生成...'));
+      watchPaths.forEach((p) => console.log(`   监听: ${p}`));
+      console.log(style.yellow('   按 Ctrl+C 退出\n'));
+
+      // 先执行一次生成
+      await doGenerate();
+
+      let debounceTimer: NodeJS.Timeout | null = null;
+      for (const watchPath of watchPaths) {
+        watch(watchPath, (eventType) => {
+          if (eventType === 'change') {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => doGenerate(), 500);
+          }
+        });
+      }
+
+      // 保持进程运行
+      process.stdin.resume();
+    } else {
+      await doGenerate();
     }
   });
 

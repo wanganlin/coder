@@ -13,8 +13,8 @@ describe('Vue3 + Element Plus Templates Integration (T10)', () => {
     const metadata = engine.getPluginMetadata();
     expect(metadata.name).toBe('vue3-element');
     expect(metadata.language).toBe('typescript');
-    expect(metadata.skeleton?.length).toBe(7);
-    expect(metadata.entityTemplates?.length).toBe(3);
+    expect(metadata.skeleton?.length).toBe(9);
+    expect(metadata.entityTemplates?.length).toBe(4);
   });
 
   it('should render vue3-element skeleton files', () => {
@@ -29,8 +29,9 @@ describe('Vue3 + Element Plus Templates Integration (T10)', () => {
         package: 'com.example.myapp',
       },
       tables: { include: [], exclude: [] },
-      features: { swagger: false, unitTest: false, pagination: true, auditFields: true },
+      features: { swagger: false, unitTest: false, pagination: true, auditFields: true, format: false, verify: false },
       extensions: {},
+      typeMappings: {},
     };
 
     const tables: TableSchema[] = [
@@ -38,7 +39,7 @@ describe('Vue3 + Element Plus Templates Integration (T10)', () => {
     ];
 
     const outputs = engine.renderSkeleton(config, tables);
-    expect(outputs.length).toBe(7);
+    expect(outputs.length).toBe(9);
 
     const pkgFile = outputs.find((o) => o.outputPath === 'package.json')!;
     expect(pkgFile).toBeDefined();
@@ -79,8 +80,9 @@ describe('Vue3 + Element Plus Templates Integration (T10)', () => {
         package: 'com.example.myapp',
       },
       tables: { include: [], exclude: [] },
-      features: { swagger: false, unitTest: false, pagination: true, auditFields: true },
+      features: { swagger: false, unitTest: false, pagination: true, auditFields: true, format: false, verify: false },
       extensions: {},
+      typeMappings: {},
     };
 
     const table: TableSchema = {

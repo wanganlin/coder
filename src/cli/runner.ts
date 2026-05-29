@@ -1,5 +1,6 @@
 import { resolve, dirname } from 'node:path';
 import { existsSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { loadConfig, type CliOverrides } from '../config/index.js';
 import { createDatasourceAdapter } from '../datasource/index.js';
@@ -17,15 +18,42 @@ export interface GenerationSummary {
 
 /**
  * 自动定位插件目录
+ *
+ * 按优先级依次查找:
+ * 1. CODER_PLUGIN_PATH 环境变量指定的目录
+ * 2. ~/.coder/plugins 用户级插件目录
+ * 3. CWD 下的 templates/ 目录
+ * 4. 项目内置的 templates/ 目录
  */
 function resolvePluginDir(framework: string): string {
-  let pluginDir = resolve(process.cwd(), 'templates', framework);
-  if (!existsSync(pluginDir)) {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = dirname(__filename);
-    pluginDir = resolve(__dirname, '../../templates', framework);
+  const searchDirs: string[] = [];
+
+  // 1. 环境变量 CODER_PLUGIN_PATH
+  const envPath = process.env.CODER_PLUGIN_PATH;
+  if (envPath) {
+    searchDirs.push(resolve(envPath, framework));
   }
-  return pluginDir;
+
+  // 2. 用户级插件目录 ~/.coder/plugins
+  searchDirs.push(resolve(homedir(), '.coder', 'plugins', framework));
+
+  // 3. CWD 相对路径
+  searchDirs.push(resolve(process.cwd(), 'templates', framework));
+
+  // 4. 项目内置目录 (source-relative)
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+  searchDirs.push(resolve(__dirname, '../../templates', framework));
+
+  for (const dir of searchDirs) {
+    if (existsSync(dir)) {
+      return dir;
+    }
+  }
+
+  throw new Error(
+    `未找到框架 "${framework}" 的插件目录。已搜索:\n${searchDirs.map((d) => `  - ${d}`).join('\n')}`,
+  );
 }
 
 /**
@@ -57,7 +85,7 @@ export async function runGeneration(
     const decoratedSchemas: TableSchema[] = [];
     for (const name of tables) {
       const rawSchema = await adapter.getTableSchema(name);
-      const decorated = processTableSchema(rawSchema, config.target.framework, config.extensions);
+      const decorated = processTableSchema(rawSchema, config.target.framework, config.extensions, config.typeMappings);
       decoratedSchemas.push(decorated);
       tablesProcessed.push(name);
     }

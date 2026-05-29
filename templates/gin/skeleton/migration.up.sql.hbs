@@ -1,0 +1,12 @@
+-- Coder Generated Migration (golang-migrate format)
+-- 000001_init_schema.up.sql
+
+{{#each tables}}
+CREATE TABLE {{name}} (
+{{#each columns}}
+    {{name}} {{rawType}}{{#unless nullable}} NOT NULL{{/unless}}{{#if isAutoIncrement}} AUTO_INCREMENT{{/if}}{{#if @last}}{{else}},{{/if}}
+{{/each}}{{#if primaryKey.length}},
+    PRIMARY KEY ({{#each primaryKey}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}){{/if}}
+);
+
+{{/each}}

@@ -47,3 +47,21 @@ func Test{{className}}_JSONSerialization(t *testing.T) {
 
 	assert.NotNil(t, entity)
 }
+{{#if table.relationships.length}}
+
+func Test{{className}}_Relationships(t *testing.T) {
+	entity := &{{className}}{}
+	assert.NotNil(t, entity)
+{{#each table.relationships}}
+{{#if (or (eq type "ManyToOne") (eq type "OneToOne"))}}
+	assert.Nil(t, entity.{{pascalCase targetPropertyName}})
+{{/if}}
+{{#if (eq type "OneToMany")}}
+	assert.Nil(t, entity.{{pascalCase targetPropertyName}}List)
+{{/if}}
+{{#if (eq type "ManyToMany")}}
+	assert.Nil(t, entity.{{pascalCase (pluralize targetPropertyName)}})
+{{/if}}
+{{/each}}
+}
+{{/if}}

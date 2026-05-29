@@ -52,6 +52,28 @@ class {{className}}Test extends TestCase
         ]);
     }
 
+{{#if table.relationships.length}}
+    /**
+     * 测试关联关系方法存在
+     */
+    public function test_relationship_methods_exist(): void
+    {
+        $model = new {{className}}();
+
+{{#each table.relationships}}
+{{#if (or (eq type "ManyToOne") (eq type "OneToOne"))}}
+        $this->assertTrue(method_exists($model, '{{targetPropertyName}}'));
+{{/if}}
+{{#if (eq type "OneToMany")}}
+        $this->assertTrue(method_exists($model, '{{targetPropertyName}}List'));
+{{/if}}
+{{#if (eq type "ManyToMany")}}
+        $this->assertTrue(method_exists($model, '{{pluralize targetPropertyName}}'));
+{{/if}}
+{{/each}}
+    }
+
+{{/if}}
     /**
      * 测试表名配置
      */
